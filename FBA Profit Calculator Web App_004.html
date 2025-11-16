@@ -179,7 +179,7 @@
                                 class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
                         </div>
 
-                        <!-- NEW: Prep Costs -->
+                        <!-- Separate Fixed Costs -->
                         <div>
                             <label for="prepCosts" class="block text-sm font-medium text-gray-300">
                                 Prep & Labeling Costs ($)
@@ -189,7 +189,6 @@
                                 class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
                         </div>
 
-                        <!-- NEW: Shipping to FBA Costs -->
                         <div>
                             <label for="shipToFbaCosts" class="block text-sm font-medium text-gray-300">
                                 Shipping to FBA Costs ($)
@@ -199,7 +198,6 @@
                                 class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
                         </div>
 
-                        <!-- NEW: Miscellaneous Costs (The catch-all) -->
                         <div>
                             <label for="miscellaneousCosts" class="block text-sm font-medium text-gray-300">
                                 Miscellaneous Per-Unit Costs ($)
@@ -209,7 +207,7 @@
                                 class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
                         </div>
 
-                        <!-- Units Sold (now takes up both columns when needed) -->
+                        <!-- Units Sold -->
                         <div class="sm:col-span-2">
                             <label for="unitsSold" class="block text-sm font-medium text-gray-300">
                                 Estimated Monthly Units Sold
@@ -254,7 +252,7 @@
                         </p>
                     </div>
 
-                    <!-- Box 4: Monthly Profit (Updated Label) -->
+                    <!-- Box 4: Monthly Profit -->
                     <div class="bg-fba-light p-3 rounded-lg shadow-lg">
                         <p class="text-xs font-medium text-gray-300">
                             Monthly Profit (Based on <span id="unitsSoldDisplay">300</span> Units)
@@ -268,31 +266,50 @@
 
             <hr class="border-fba-light">
 
-            <!-- FEES BREAKDOWN SECTION -->
+            <!-- UNIT COST BREAKDOWN SECTION -->
             <section>
-                <h2 class="text-xl font-bold text-gray-200 border-b border-fba-light pb-2 mb-4">Fee Breakdown (Per Unit)
-                </h2>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                    <div class="flex justify-between items-center text-gray-300">
-                        <span>Referral Fee:</span>
+                <h2 class="text-xl font-bold text-gray-200 border-b border-fba-light pb-2 mb-4">Unit Cost Breakdown</h2>
+                <!-- Using grid-cols-3 and sm:col-span-2 to ensure labels and values are easily readable -->
+                <div class="grid grid-cols-3 gap-x-4 gap-y-2 text-sm">
+
+                    <div class="flex justify-between items-center text-gray-300 col-span-2">
+                        <span>Amazon Referral Fee:</span>
                         <span id="displayReferralFee" class="font-semibold text-accent-blue">$0.00</span>
                     </div>
-                    <div class="flex justify-between items-center text-gray-300">
-                        <span>FBA Fee:</span>
+                    <div class="flex justify-between items-center text-gray-300 col-span-2">
+                        <span>FBA Fulfillment Fee:</span>
                         <span id="displayFBAFee" class="font-semibold text-accent-blue">$0.00</span>
                     </div>
-                    <div class="flex justify-between items-center text-gray-300">
-                        <span>Storage Fee:</span>
+                    <div class="flex justify-between items-center text-gray-300 col-span-2">
+                        <span>Monthly Storage Fee:</span>
                         <span id="displayStorageFee" class="font-semibold text-accent-blue">$0.00</span>
                     </div>
-                    <!-- Updated Label for Total Other Fixed Costs -->
-                    <div class="flex justify-between items-center text-gray-300">
-                        <span>Other Fixed Costs:</span>
-                        <span id="displayOtherCosts" class="font-semibold text-accent-blue">$0.00</span>
+                    <div class="flex justify-between items-center text-gray-300 col-span-2">
+                        <span>Prep, Shipping & Other Costs:</span>
+                        <span id="displayOtherFixedCostsCombined" class="font-semibold text-accent-blue">$0.00</span>
                     </div>
-                    <div class="flex justify-between items-center font-bold text-gray-100">
-                        <span>Total Costs:</span>
-                        <span id="displayTotalCosts" class="text-base text-loss-red">$0.00</span>
+
+                    <!-- Line Divider -->
+                    <div class="col-span-3 border-t border-fba-medium pt-2 mb-1"></div>
+
+                    <!-- SUMMARY: Total Selling Fees -->
+                    <div class="flex justify-between items-center font-bold text-gray-100 col-span-2">
+                        <span class="text-sm">TOTAL SELLING FEES & COSTS:</span>
+                        <span id="displayTotalSellingFees"
+                            class="text-base text-accent-blue font-extrabold">$0.00</span>
+                    </div>
+
+                    <!-- COGS Line Item -->
+                    <div class="flex justify-between items-center text-gray-100 col-span-2">
+                        <span class="text-sm">COST OF GOODS SOLD (COGS):</span>
+                        <span id="displayCOGS" class="text-base font-extrabold text-white">$0.00</span>
+                    </div>
+
+                    <!-- FINAL SUMMARY: Total Investment -->
+                    <div
+                        class="flex justify-between items-center font-bold text-gray-100 col-span-2 mt-2 pt-2 border-t border-accent-blue">
+                        <span class="text-base">TOTAL INVESTMENT (PRICE FLOOR):</span>
+                        <span id="displayTotalInvestment" class="text-lg text-loss-red font-extrabold">$0.00</span>
                     </div>
                 </div>
             </section>
@@ -337,7 +354,7 @@
             const fbaFulfillmentFee = parseFloat(document.getElementById('fbaFee').value) || 0;
             const monthlyStorageFee = parseFloat(document.getElementById('monthlyStorageFee').value) || 0;
 
-            // NEW: Separate Fixed Costs
+            // Separate Fixed Costs
             const prepCosts = parseFloat(document.getElementById('prepCosts').value) || 0;
             const shipToFbaCosts = parseFloat(document.getElementById('shipToFbaCosts').value) || 0;
             const miscellaneousCosts = parseFloat(document.getElementById('miscellaneousCosts').value) || 0;
@@ -351,10 +368,10 @@
             // Sum of all 'Other Fixed Costs'
             const totalOtherFixedCosts = prepCosts + shipToFbaCosts + miscellaneousCosts;
 
-            // Total cost per unit (excluding COGS and profit)
+            // Total cost per unit (excluding COGS and profit) -> This is the TOTAL SELLING FEES & COSTS
             const totalFeesAndCostsPerUnit = referralFee + fbaFulfillmentFee + monthlyStorageFee + totalOtherFixedCosts;
 
-            // Total investment per unit (COGS + all fees)
+            // Total investment per unit (COGS + all fees) -> This is the TOTAL INVESTMENT
             const totalInvestmentPerUnit = cogs + totalFeesAndCostsPerUnit;
 
             // --- 3. Calculate Profit Metrics (Per Unit) ---
@@ -375,12 +392,14 @@
             const maxCOGS = sellingPrice - totalFeesAndCostsPerUnit - targetProfit;
 
             // 5b. Calculate MIN Selling Price: The lowest Selling Price needed to hit the target profit
-            const fixedCostForMinPrice = fbaFulfillmentFee + monthlyStorageFee + totalOtherFixedCosts + cogs;
+            const fixedCostForMinPrice = totalFeesAndCostsPerUnit + cogs;
 
             let minSellingPrice = 0;
             // The formula is: S = (Target Profit + Fixed Costs) / (1 - Referral Rate)
             if (referralRate < 1) {
-                minSellingPrice = (targetProfit + fixedCostForMinPrice) / (1 - referralRate);
+                // We must subtract the referral fee portion of the fixed costs before dividing by (1 - rate)
+                const nonReferralCosts = fbaFulfillmentFee + monthlyStorageFee + totalOtherFixedCosts + cogs;
+                minSellingPrice = (targetProfit + nonReferralCosts) / (1 - referralRate);
             }
 
             // --- 6. Update UI with Results ---
@@ -406,18 +425,24 @@
             document.getElementById('unitsSoldDisplay').textContent = unitsSold.toLocaleString();
             document.getElementById('monthlyProfit').textContent = formatCurrency(monthlyProfit);
 
-            // Fee Breakdown
+            // --- 7. Update Unit Cost Breakdown Section ---
             document.getElementById('displayReferralFee').textContent = formatCurrency(referralFee);
             document.getElementById('displayFBAFee').textContent = formatCurrency(fbaFulfillmentFee);
             document.getElementById('displayStorageFee').textContent = formatCurrency(monthlyStorageFee);
 
-            // Display the sum of the new fixed costs
-            document.getElementById('displayOtherCosts').textContent = formatCurrency(totalOtherFixedCosts);
+            // Other Fixed Costs Combined
+            document.getElementById('displayOtherFixedCostsCombined').textContent = formatCurrency(totalOtherFixedCosts);
 
-            // Display Total Costs
-            document.getElementById('displayTotalCosts').textContent = formatCurrency(totalFeesAndCostsPerUnit + cogs);
+            // Total Selling Fees & Costs (FBA/Prep/Shipping)
+            document.getElementById('displayTotalSellingFees').textContent = formatCurrency(totalFeesAndCostsPerUnit);
 
-            // --- 7. Update Labels with Inverse Metrics ---
+            // COGS Line
+            document.getElementById('displayCOGS').textContent = formatCurrency(cogs);
+
+            // Total Investment (Fees + COGS)
+            document.getElementById('displayTotalInvestment').textContent = formatCurrency(totalInvestmentPerUnit);
+
+            // --- 8. Update Labels with Inverse Metrics ---
 
             const minPriceValueContainer = document.getElementById('minPriceValue');
             const maxCogsValueContainer = document.getElementById('maxCogsValueContainer');
