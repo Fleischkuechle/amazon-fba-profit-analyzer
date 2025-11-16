@@ -3,3 +3,5 @@ simple on page web app for calculating profits for sales on amazon
 
 
 ![alt text](img/overview.png)
+
+![alt text](img/overview_02.png)
