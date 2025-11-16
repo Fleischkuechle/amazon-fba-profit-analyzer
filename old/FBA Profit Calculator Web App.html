@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<!-- Applying 'dark' class permanently to enable dark mode styles -->
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FBA Profit Analyzer (Dark Mode)</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for appearance */
+        :root {
+            --primary-color: #3b82f6;
+            /* Tailwind blue-500 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Fixed dark mode background */
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .card {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<!-- Setting body to dark mode default background and text colors -->
+
+<body class="p-4 md:p-8 min-h-screen flex items-start justify-center bg-gray-900 text-gray-100">
+
+    <div class="w-full max-w-4xl space-y-8">
+
+        <!-- Header - fixed to dark background -->
+        <header class="relative p-6 rounded-xl shadow-lg card bg-gray-800">
+            <h1 class="text-3xl font-extrabold text-gray-100 text-center">Amazon FBA Profit Analyzer</h1>
+            <p class="text-gray-400 mt-2 text-center">Calculate your net profit, margin, and ROI per unit.</p>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Input Form (2/3 width on large screens) - fixed to dark background -->
+            <div class="lg:col-span-2 p-6 rounded-xl card bg-gray-800">
+                <h2 class="text-xl font-semibold mb-6 text-gray-300 border-b pb-3 border-gray-700">Input Costs and
+                    Revenue</h2>
+
+                <form id="profit-form" class="space-y-4">
+
+                    <!-- Input Fields Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                        <div class="col-span-1">
+                            <label for="selling-price" class="block text-sm font-medium text-gray-300">Selling Price
+                                ($)</label>
+                            <input type="number" step="0.01" id="selling-price" value="29.99" required
+                                class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div class="col-span-1">
+                            <label for="cogs" class="block text-sm font-medium text-gray-300">Cost of Goods Sold (COGS)
+                                ($)</label>
+                            <input type="number" step="0.01" id="cogs" value="10.00" required
+                                class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div class="col-span-1">
+                            <label for="referral-rate" class="block text-sm font-medium text-gray-300">Amazon Referral
+                                Fee Rate (%)</label>
+                            <input type="number" step="0.1" id="referral-rate" value="15" required
+                                class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div class="col-span-1">
+                            <label for="fba-fee" class="block text-sm font-medium text-gray-300">FBA Fulfillment Fee
+                                ($)</label>
+                            <input type="number" step="0.01" id="fba-fee" value="5.00" required
+                                class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div class="col-span-1">
+                            <label for="prep-cost" class="block text-sm font-medium text-gray-300">Prep Cost per Unit
+                                ($)</label>
+                            <input type="number" step="0.01" id="prep-cost" value="0.50" required
+                                class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div class="col-span-1">
+                            <label for="shipping-to-fba" class="block text-sm font-medium text-gray-300">Shipping to FBA
+                                per Unit ($)</label>
+                            <input type="number" step="0.01" id="shipping-to-fba" value="1.50" required
+                                class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <!-- Target Profit Input -->
+                        <div class="col-span-1">
+                            <label for="target-profit" class="block text-sm font-medium text-gray-300">Target Net Profit
+                                per Unit ($)</label>
+                            <input type="number" step="0.01" id="target-profit" value="5.00" required
+                                class="mt-1 block w-full rounded-md border-green-700 bg-green-900/50 text-gray-100 shadow-sm p-3 border focus:ring-green-500 focus:border-green-500">
+                        </div>
+
+                    </div>
+
+                    <!-- Calculate Button -->
+                    <button type="submit"
+                        class="w-full py-3 mt-6 text-white font-bold bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-150 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Calculate Profit
+                    </button>
+                </form>
+
+                <!-- Error Message Container -->
+                <div id="error-message"
+                    class="hidden mt-4 p-3 bg-red-900/50 border border-red-700 text-red-300 rounded-lg" role="alert">
+                    Please ensure all required fields are filled with valid numbers.
+                </div>
+            </div>
+
+            <!-- Results Panel (1/3 width on large screens) - fixed to dark background -->
+            <div class="lg:col-span-1 p-6 rounded-xl card flex flex-col space-y-4 bg-gray-800">
+                <h2 class="text-xl font-semibold mb-4 text-gray-300 border-b pb-3 border-gray-700">Profitability Metrics
+                </h2>
+
+                <div id="results-panel" class="space-y-4">
+                    <p class="text-gray-400 text-center py-8">Enter the product details and click 'Calculate Profit' to
+                        see the results here.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Safely retrieves a numeric value from an input field.
+         * @param {string} id The ID of the input element.
+         * @returns {number} The parsed float value, or 0 if invalid.
+         */
+        function getInputValue(id) {
+            const element = document.getElementById(id);
+            if (element && element.value) {
+                return parseFloat(element.value);
+            }
+            return 0;
+        }
+
+        /**
+         * Renders the calculated profit results and financial breakdown.
+         * @param {object} deal The object containing all input and calculated metrics.
+         */
+        function renderResults(deal) {
+            const resultsPanel = document.getElementById('results-panel');
+
+            // Add fallback to 0 for all properties used with toFixed to prevent runtime errors
+            const netProfit = deal.netProfit || 0;
+            const netProfitMargin = deal.netProfitMargin || 0;
+            const roi = deal.roi || 0;
+            const maxCogs = deal.maxCogs || 0;
+            const sellingPrice = deal.sellingPrice || 0;
+            const cogs = deal.cogs || 0;
+            const referralRate = deal.referralRate || 0;
+            const referralFee = deal.referralFee || 0;
+            const fbaFulfillmentFee = deal.fbaFulfillmentFee || 0;
+            const prepCostPerUnit = deal.prepCostPerUnit || 0;
+            const shippingToFba = deal.shippingToFba || 0;
+            const totalFeesAndCosts = deal.totalFeesAndCosts || 0;
+            const targetProfit = deal.targetProfit || 0;
+
+
+            // Status colors optimized for dark background
+            const profitStatus = netProfit >= 0 ? 'text-green-400' : 'text-red-400';
+
+            // Dynamic classes for dark mode for status boxes
+            const marginClasses = netProfitMargin >= 15
+                ? 'bg-green-900/40 text-green-300'
+                : (netProfitMargin >= 10
+                    ? 'bg-yellow-900/40 text-yellow-300'
+                    : 'bg-red-900/40 text-red-300');
+
+            const roiClasses = roi >= 50
+                ? 'bg-green-900/40 text-green-300'
+                : (roi >= 25
+                    ? 'bg-yellow-900/40 text-yellow-300'
+                    : 'bg-red-900/40 text-red-300');
+
+            const maxCogsClasses = maxCogs >= 0
+                ? 'bg-green-900/20 border-green-600'
+                : 'bg-red-900/20 border-red-600';
+
+            const maxCogsTextClasses = maxCogs >= 0 ? 'text-green-300' : 'text-red-300';
+
+
+            resultsPanel.innerHTML = `
+                <!-- Key Metrics Section -->
+                <div class="space-y-3">
+                    <h3 class="text-lg font-bold text-gray-200">Key Metrics</h3>
+                    
+                    <!-- Max COGS Metric -->
+                    <div class="flex flex-col items-center p-4 rounded-lg border-2 ${maxCogsClasses}">
+                        <span class="font-bold text-sm text-gray-300">MAX ALLOWABLE COGS (To hit $${targetProfit.toFixed(2)} profit)</span>
+                        <span class="text-2xl font-extrabold mt-1 ${maxCogsTextClasses}">$${maxCogs.toFixed(2)}</span>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-lg bg-gray-700 border border-gray-700">
+                        <span class="font-medium text-gray-300">Actual Net Profit</span>
+                        <span class="text-xl font-extrabold ${profitStatus}">$${netProfit.toFixed(2)}</span>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-lg ${marginClasses}">
+                        <span class="font-medium">Profit Margin</span>
+                        <span class="text-xl font-bold">${netProfitMargin.toFixed(2)}%</span>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-lg ${roiClasses}">
+                        <span class="font-medium">Return on Investment (ROI)</span>
+                        <span class="text-xl font-bold">${roi.toFixed(2)}%</span>
+                    </div>
+                </div>
+
+                <!-- Breakdown Section -->
+                <div class="pt-4 border-t border-gray-700">
+                    <h3 class="text-lg font-bold text-gray-200 mb-2">Detailed Financial Breakdown</h3>
+                    <dl class="text-sm text-gray-400 space-y-1">
+                        
+                        <!-- 1. Revenue -->
+                        <div class="flex justify-between font-bold text-base text-gray-200 bg-blue-900/20 p-2 rounded">
+                            <dt>TOTAL REVENUE (Selling Price)</dt>
+                            <dd class="text-blue-400">$${sellingPrice.toFixed(2)}</dd>
+                        </div>
+
+                        <div class="border-t pt-1 mt-1 border-gray-700"></div>
+
+                        <!-- 2. Individual Deductions -->
+                        <h4 class="font-semibold text-gray-300 mt-3 mb-1">Deductions (Costs & Fees):</h4>
+                        <div class="flex justify-between">
+                            <dt>Cost of Goods Sold (COGS)</dt>
+                            <dd>-$${cogs.toFixed(2)}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt>Amazon Referral Fee (${(referralRate * 100).toFixed(1)}%)</dt>
+                            <dd>-$${referralFee.toFixed(2)}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt>FBA Fulfillment Fee</dt>
+                            <dd>-$${fbaFulfillmentFee.toFixed(2)}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt>Prep & Labeling Cost</dt>
+                            <dd>-$${prepCostPerUnit.toFixed(2)}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt>Inbound Shipping to FBA</dt>
+                            <dd>-$${shippingToFba.toFixed(2)}</dd>
+                        </div>
+                        
+                        <div class="border-t pt-2 mt-2 border-gray-600"></div>
+
+                        <!-- 3. Total Deductions Summary (The explanation for the negative sign) -->
+                        <div class="flex justify-between font-bold text-base text-gray-200">
+                            <dt>TOTAL DEDUCTIONS SUM</dt>
+                            <dd class="text-red-400">-$${totalFeesAndCosts.toFixed(2)}</dd>
+                        </div>
+                        
+                        <div class="border-t pt-2 mt-2 border-gray-600"></div>
+                        
+                        <!-- 4. Net Profit Calculation (The explicit formula) -->
+                        <div class="flex justify-between font-extrabold text-lg text-gray-100 bg-green-900/30 p-2 rounded">
+                            <dt>NET PROFIT (Revenue - Deductions)</dt>
+                            <dd class="${profitStatus}">$${netProfit.toFixed(2)}</dd>
+                        </div>
+                    </dl>
+                </div>
+            `;
+        }
+
+        /**
+         * Main function to perform the FBA profit calculation.
+         */
+        function calculateProfit() {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.classList.add('hidden');
+
+            // 1. Get Input Values
+            const sellingPrice = getInputValue('selling-price');
+            const cogs = getInputValue('cogs');
+            const referralRatePercent = getInputValue('referral-rate');
+            const fbaFulfillmentFee = getInputValue('fba-fee');
+            const prepCostPerUnit = getInputValue('prep-cost');
+            const shippingToFba = getInputValue('shipping-to-fba');
+            const targetProfit = getInputValue('target-profit');
+
+            // Basic validation
+            if (sellingPrice <= 0 || isNaN(sellingPrice)) {
+                errorMessage.classList.remove('hidden');
+                document.getElementById('results-panel').innerHTML = '<p class="text-gray-400 text-center py-8">Please enter a valid positive number for Selling Price.</p>';
+                return;
+            }
+
+            const referralRate = referralRatePercent / 100.0;
+
+            // 2. Calculate Costs and Profit (Current Deal)
+            const referralFee = sellingPrice * referralRate;
+
+            const nonCogsFees =
+                referralFee +
+                fbaFulfillmentFee +
+                prepCostPerUnit +
+                shippingToFba;
+
+            const totalFeesAndCosts = cogs + nonCogsFees;
+
+            const netProfit = sellingPrice - totalFeesAndCosts;
+
+            // 3. Calculate Maximum Allowable COGS 
+            // Max COGS = Selling Price - Target Profit - (Non-COGS Fees)
+            const maxCogs = sellingPrice - targetProfit - nonCogsFees;
+
+            // 4. Calculate Metrics
+            let netProfitMargin = 0;
+            if (sellingPrice > 0) {
+                netProfitMargin = (netProfit / sellingPrice) * 100;
+            }
+
+            let roi = 0;
+            // Total Investment for ROI = COGS + Prep Cost + Shipping to FBA
+            const totalInvestment = cogs + prepCostPerUnit + shippingToFba;
+            if (totalInvestment > 0) {
+                roi = (netProfit / totalInvestment) * 100;
+            }
+
+
+            // 5. Create Deal Object for Rendering
+            const deal = {
+                sellingPrice,
+                cogs,
+                referralRate,
+                fbaFulfillmentFee,
+                prepCostPerUnit,
+                shippingToFba,
+                targetProfit,
+                maxCogs,
+                referralFee,
+                totalFeesAndCosts,
+                netProfit,
+                netProfitMargin,
+                roi
+            };
+
+            // 6. Display Results
+            renderResults(deal);
+        }
+
+        // Run initial calculation on load
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateProfit();
+        });
+    </script>
+
+</body>
+
+</html>

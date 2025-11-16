@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<!-- Applying 'dark' class permanently to enable dark mode styles -->
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FBA Profit Analyzer (Dark Mode)</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for appearance */
+        :root {
+            --primary-color: #3b82f6;
+            /* Tailwind blue-500 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .card {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom transition for the collapsible section */
+        .collapsible-content {
+            transition: max-height 0.5s ease-out, opacity 0.3s ease-in-out;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .collapsible-content.expanded {
+            max-height: 500px;
+            /* Large enough value to contain content */
+            opacity: 1;
+        }
+
+        /* Style for the button background change on active/focus to match the dark theme */
+        .bg-gray-700\/50:hover {
+            background-color: rgb(55 65 81 / 0.5);
+        }
+    </style>
+</head>
+<!-- Setting body to dark mode default background and text colors -->
+
+<body class="p-4 md:p-8 min-h-screen flex items-start justify-center bg-gray-900 text-gray-100">
+
+    <div class="w-full max-w-4xl space-y-8">
+
+        <!-- Header - fixed to dark background -->
+        <header class="relative p-6 rounded-xl shadow-lg card bg-gray-800">
+            <h1 class="text-3xl font-extrabold text-gray-100 text-center">Amazon FBA Profit Analyzer</h1>
+            <p class="text-gray-400 mt-2 text-center">Calculate your net profit, margin, and ROI per unit in real-time.
+            </p>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Input Form (2/3 width on large screens) - fixed to dark background -->
+            <div class="lg:col-span-2 p-6 rounded-xl card bg-gray-800">
+                <h2 class="text-xl font-semibold mb-6 text-gray-300 border-b pb-3 border-gray-700">Input Costs and
+                    Revenue</h2>
+
+                <form id="profit-form" class="space-y-4">
+
+                    <!-- PRIMARY INPUTS (SELLING PRICE & COGS) - ALWAYS VISIBLE -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                        <div class="col-span-1">
+                            <label for="selling-price" class="block text-sm font-medium text-gray-300">Selling Price
+                                ($)</label>
+                            <!-- Input mode set to decimal for better mobile currency input -->
+                            <input type="number" step="0.01" id="selling-price" required inputmode="decimal"
+                                class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div class="col-span-1">
+                            <label for="cogs" class="block text-sm font-medium text-gray-300">Cost of Goods Sold (COGS)
+                                ($)</label>
+                            <!-- Input mode set to decimal for better mobile currency input -->
+                            <input type="number" step="0.01" id="cogs" required inputmode="decimal"
+                                class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- COLLAPSIBLE DETAILS SECTION (Contains all other costs/targets) -->
+                    <div class="pt-4">
+                        <button type="button" id="toggle-input-details"
+                            class="flex items-center justify-between w-full py-2 px-3 text-left font-medium text-blue-400 hover:text-blue-300 transition duration-150 rounded-md bg-gray-700/50 hover:bg-gray-700">
+                            <span id="toggle-input-text">Show Detailed Fees and Target</span>
+                            <!-- SVG for Arrow Icon -->
+                            <svg id="toggle-input-icon" class="w-5 h-5 transition-transform duration-300 transform"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+
+                        <div id="detailed-costs-content" class="collapsible-content space-y-4 mt-2">
+                            <!-- Input Fields Grid for Collapsible Content -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+
+                                <div class="col-span-1">
+                                    <label for="referral-rate" class="block text-sm font-medium text-gray-300">Amazon
+                                        Referral Fee Rate (%)</label>
+                                    <input type="number" step="0.1" id="referral-rate" required inputmode="decimal"
+                                        class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+
+                                <div class="col-span-1">
+                                    <label for="fba-fee" class="block text-sm font-medium text-gray-300">FBA Fulfillment
+                                        Fee ($)</label>
+                                    <input type="number" step="0.01" id="fba-fee" required inputmode="decimal"
+                                        class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+
+                                <div class="col-span-1">
+                                    <label for="prep-cost" class="block text-sm font-medium text-gray-300">Prep Cost per
+                                        Unit ($)</label>
+                                    <input type="number" step="0.01" id="prep-cost" required inputmode="decimal"
+                                        class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+
+                                <div class="col-span-1">
+                                    <label for="shipping-to-fba"
+                                        class="block text-sm font-medium text-gray-300">Shipping to FBA per Unit
+                                        ($)</label>
+                                    <input type="number" step="0.01" id="shipping-to-fba" required inputmode="decimal"
+                                        class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-100 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+
+                                <!-- Target Profit Input -->
+                                <div class="col-span-full pt-2">
+                                    <label for="target-profit" class="block text-sm font-medium text-gray-300">Target
+                                        Net Profit per Unit ($)</label>
+                                    <input type="number" step="0.01" id="target-profit" required inputmode="decimal"
+                                        class="mt-1 block w-full rounded-md border-green-700 bg-green-900/50 text-gray-100 shadow-sm p-3 border focus:ring-green-500 focus:border-green-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END COLLAPSIBLE DETAILS SECTION -->
+
+                    <!-- Hidden Submit Button for accessibility/Enter key behavior -->
+                    <button type="submit" id="calculate-button" class="hidden"></button>
+                </form>
+
+                <!-- Error Message Container -->
+                <div id="error-message"
+                    class="hidden mt-4 p-3 bg-red-900/50 border border-red-700 text-red-300 rounded-lg" role="alert">
+                    Please ensure all required fields are filled with valid positive numbers.
+                </div>
+            </div>
+
+            <!-- Results Panel (1/3 width on large screens) - fixed to dark background -->
+            <div class="lg:col-span-1 p-6 rounded-xl card flex flex-col space-y-4 bg-gray-800">
+                <h2 class="text-xl font-semibold mb-4 text-gray-300 border-b pb-3 border-gray-700">Profitability Metrics
+                </h2>
+
+                <div id="results-panel" class="space-y-4">
+                    <p class="text-gray-400 text-center py-8">Enter the product details to see the results here.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Define default values here
+        const DEFAULT_VALUES = {
+            'selling-price': 29.99,
+            'cogs': 10.00,
+            'referral-rate': 15,
+            'fba-fee': 5.00,
+            'prep-cost': 0.50,
+            'shipping-to-fba': 1.50,
+            'target-profit': 5.00
+        };
+
+        let isInputCollapsed = true;
+        let isBreakdownCollapsed = true; // New state for the breakdown section
+
+        /**
+         * Safely retrieves a numeric value from an input field.
+         * @param {string} id The ID of the input element.
+         * @returns {number} The parsed float value, or 0 if invalid.
+         */
+        function getInputValue(id) {
+            const element = document.getElementById(id);
+            if (element && element.value) {
+                // Ensure number is positive before parsing
+                const val = parseFloat(element.value);
+                return val >= 0 ? val : 0;
+            }
+            return 0;
+        }
+
+        /**
+         * Renders the calculated profit results and financial breakdown.
+         * @param {object} deal The object containing all input and calculated metrics.
+         */
+        function renderResults(deal) {
+            const resultsPanel = document.getElementById('results-panel');
+
+            // Add fallback to 0 for all properties used with toFixed to prevent runtime errors
+            const netProfit = deal.netProfit || 0;
+            const netProfitMargin = deal.netProfitMargin || 0;
+            const roi = deal.roi || 0;
+            const maxCogs = deal.maxCogs || 0;
+            const sellingPrice = deal.sellingPrice || 0;
+            const cogs = deal.cogs || 0;
+            const referralRate = deal.referralRate || 0;
+            const referralFee = deal.referralFee || 0;
+            const fbaFulfillmentFee = deal.fbaFulfillmentFee || 0;
+            const prepCostPerUnit = deal.prepCostPerUnit || 0;
+            const shippingToFba = deal.shippingToFba || 0;
+            const totalFeesAndCosts = deal.totalFeesAndCosts || 0;
+            const targetProfit = deal.targetProfit || 0;
+
+
+            // Status colors optimized for dark background
+            const profitStatus = netProfit >= 0 ? 'text-green-400' : 'text-red-400';
+
+            // Dynamic classes for dark mode for status boxes
+            const marginClasses = netProfitMargin >= 15
+                ? 'bg-green-900/40 text-green-300'
+                : (netProfitMargin >= 10
+                    ? 'bg-yellow-900/40 text-yellow-300'
+                    : 'bg-red-900/40 text-red-300');
+
+            const roiClasses = roi >= 50
+                ? 'bg-green-900/40 text-green-300'
+                : (roi >= 25
+                    ? 'bg-yellow-900/40 text-yellow-300'
+                    : 'bg-red-900/40 text-red-300');
+
+            const maxCogsClasses = maxCogs >= cogs
+                ? 'bg-green-900/20 border-green-600'
+                : 'bg-red-900/20 border-red-600';
+
+            const maxCogsTextClasses = maxCogs >= cogs ? 'text-green-300' : 'text-red-300';
+
+
+            resultsPanel.innerHTML = `
+                <!-- Key Metrics Section -->
+                <div class="space-y-3">
+                    <h3 class="text-lg font-bold text-gray-200">Key Metrics</h3>
+                    
+                    <!-- Max COGS Metric -->
+                    <div class="flex flex-col items-center p-4 rounded-lg border-2 ${maxCogsClasses}">
+                        <span class="font-bold text-sm text-gray-300 text-center">MAX ALLOWABLE COGS (To hit $${targetProfit.toFixed(2)} profit)</span>
+                        <span class="text-2xl font-extrabold mt-1 ${maxCogsTextClasses}">$${Math.max(0, maxCogs).toFixed(2)}</span>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-lg bg-gray-700 border border-gray-700">
+                        <span class="font-medium text-gray-300">Actual Net Profit</span>
+                        <span class="text-xl font-extrabold ${profitStatus}">$${netProfit.toFixed(2)}</span>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-lg ${marginClasses}">
+                        <span class="font-medium">Profit Margin</span>
+                        <span class="text-xl font-bold">${netProfitMargin.toFixed(2)}%</span>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-lg ${roiClasses}">
+                        <span class="font-medium">Return on Investment (ROI)</span>
+                        <span class="text-xl font-bold">${roi.toFixed(2)}%</span>
+                    </div>
+                </div>
+
+                <!-- Breakdown Toggle Button -->
+                <div class="pt-4 border-t border-gray-700">
+                    <button type="button" id="toggle-breakdown" class="flex items-center justify-between w-full py-2 px-3 text-left font-medium text-blue-400 hover:text-blue-300 transition duration-150 rounded-md bg-gray-700/50 hover:bg-gray-700">
+                        <span id="toggle-breakdown-text">Show Detailed Financial Breakdown</span>
+                        <svg id="toggle-breakdown-icon" class="w-5 h-5 transition-transform duration-300 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Breakdown Content (Collapsible) -->
+                <div id="breakdown-content" class="collapsible-content">
+                    <dl class="text-sm text-gray-400 space-y-1 pt-2">
+                        
+                        <!-- 1. Revenue -->
+                        <div class="flex justify-between font-bold text-base text-gray-200 bg-blue-900/20 p-2 rounded">
+                            <dt>TOTAL REVENUE (Selling Price)</dt>
+                            <dd class="text-blue-400">$${sellingPrice.toFixed(2)}</dd>
+                        </div>
+
+                        <div class="border-t pt-1 mt-1 border-gray-700"></div>
+
+                        <!-- 2. Individual Deductions -->
+                        <h4 class="font-semibold text-gray-300 mt-3 mb-1">Deductions (Costs & Fees):</h4>
+                        <div class="flex justify-between">
+                            <dt>Cost of Goods Sold (COGS)</dt>
+                            <dd>-$${cogs.toFixed(2)}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt>Amazon Referral Fee (${(referralRate * 100).toFixed(1)}%)</dt>
+                            <dd>-$${referralFee.toFixed(2)}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt>FBA Fulfillment Fee</dt>
+                            <dd>-$${fbaFulfillmentFee.toFixed(2)}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt>Prep & Labeling Cost</dt>
+                            <dd>-$${prepCostPerUnit.toFixed(2)}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt>Inbound Shipping to FBA</dt>
+                            <dd>-$${shippingToFba.toFixed(2)}</dd>
+                        </div>
+                        
+                        <div class="border-t pt-2 mt-2 border-gray-600"></div>
+
+                        <!-- 3. Total Deductions Summary (The explanation for the negative sign) -->
+                        <div class="flex justify-between font-bold text-base text-gray-200">
+                            <dt>TOTAL DEDUCTIONS SUM</dt>
+                            <dd class="text-red-400">-$${totalFeesAndCosts.toFixed(2)}</dd>
+                        </div>
+                        
+                        <div class="border-t pt-2 mt-2 border-gray-600"></div>
+                        
+                        <!-- 4. Net Profit Calculation (The explicit formula) -->
+                        <div class="flex justify-between font-extrabold text-lg text-gray-100 bg-green-900/30 p-2 rounded">
+                            <dt>NET PROFIT (Revenue - Deductions)</dt>
+                            <dd class="${profitStatus}">$${netProfit.toFixed(2)}</dd>
+                        </div>
+                    </dl>
+                </div>
+            `;
+
+            // Re-attach the breakdown toggle listener (must happen after innerHTML update)
+            document.getElementById('toggle-breakdown').addEventListener('click', toggleBreakdownContent);
+
+            // Apply current collapse state immediately after rendering
+            const breakdownContent = document.getElementById('breakdown-content');
+            const breakdownIcon = document.getElementById('toggle-breakdown-icon');
+            if (!isBreakdownCollapsed) {
+                breakdownContent.classList.add('expanded');
+                document.getElementById('toggle-breakdown-text').textContent = 'Hide Detailed Financial Breakdown';
+                breakdownIcon.classList.add('rotate-180');
+            } else {
+                breakdownContent.classList.remove('expanded');
+                document.getElementById('toggle-breakdown-text').textContent = 'Show Detailed Financial Breakdown';
+                breakdownIcon.classList.remove('rotate-180');
+            }
+        }
+
+        /**
+         * Main function to perform the FBA profit calculation.
+         */
+        function calculateProfit() {
+            const errorMessage = document.getElementById('error-message');
+            // Hide the error message at the start of every calculation attempt
+            errorMessage.classList.add('hidden');
+
+            // 1. Get Input Values
+            const sellingPrice = getInputValue('selling-price');
+            const cogs = getInputValue('cogs');
+            const referralRatePercent = getInputValue('referral-rate');
+            const fbaFulfillmentFee = getInputValue('fba-fee');
+            const prepCostPerUnit = getInputValue('prep-cost');
+            const shippingToFba = getInputValue('shipping-to-fba');
+            const targetProfit = getInputValue('target-profit');
+
+            // Basic validation: Selling Price must be positive
+            if (sellingPrice <= 0 || isNaN(sellingPrice)) {
+                errorMessage.classList.remove('hidden');
+                document.getElementById('results-panel').innerHTML = '<p class="text-gray-400 text-center py-8">Please enter a valid positive number for Selling Price.</p>';
+                return;
+            }
+
+            const referralRate = referralRatePercent / 100.0;
+
+            // 2. Calculate Costs and Profit (Current Deal)
+            const referralFee = sellingPrice * referralRate;
+
+            const nonCogsFees =
+                referralFee +
+                fbaFulfillmentFee +
+                prepCostPerUnit +
+                shippingToFba;
+
+            const totalFeesAndCosts = cogs + nonCogsFees;
+
+            const netProfit = sellingPrice - totalFeesAndCosts;
+
+            // 3. Calculate Maximum Allowable COGS 
+            // Max COGS = Selling Price - Target Profit - (Non-COGS Fees)
+            const maxCogs = sellingPrice - targetProfit - nonCogsFees;
+
+            // 4. Calculate Metrics
+            let netProfitMargin = 0;
+            if (sellingPrice > 0) {
+                netProfitMargin = (netProfit / sellingPrice) * 100;
+            }
+
+            let roi = 0;
+            // Total Investment for ROI = COGS + Prep Cost + Shipping to FBA
+            const totalInvestment = cogs + prepCostPerUnit + shippingToFba;
+            if (totalInvestment > 0) {
+                roi = (netProfit / totalInvestment) * 100;
+            }
+
+
+            // 5. Create Deal Object for Rendering
+            const deal = {
+                sellingPrice,
+                cogs,
+                referralRate,
+                fbaFulfillmentFee,
+                prepCostPerUnit,
+                shippingToFba,
+                targetProfit,
+                maxCogs,
+                referralFee,
+                totalFeesAndCosts,
+                netProfit,
+                netProfitMargin,
+                roi
+            };
+
+            // 6. Display Results
+            renderResults(deal);
+        }
+
+        /**
+         * Toggles the visibility of the detailed input costs section.
+         */
+        function toggleInputDetails() {
+            isInputCollapsed = !isInputCollapsed;
+            const content = document.getElementById('detailed-costs-content');
+            const toggleText = document.getElementById('toggle-input-text');
+            const toggleIcon = document.getElementById('toggle-input-icon');
+
+            if (!isInputCollapsed) {
+                content.classList.add('expanded');
+                toggleText.textContent = 'Hide Detailed Fees and Target';
+                toggleIcon.classList.add('rotate-180'); // Rotate arrow up
+            } else {
+                content.classList.remove('expanded');
+                toggleText.textContent = 'Show Detailed Fees and Target';
+                toggleIcon.classList.remove('rotate-180'); // Rotate arrow down
+            }
+        }
+
+        /**
+         * Toggles the visibility of the detailed financial breakdown section.
+         */
+        function toggleBreakdownContent() {
+            isBreakdownCollapsed = !isBreakdownCollapsed;
+            const content = document.getElementById('breakdown-content');
+            const toggleText = document.getElementById('toggle-breakdown-text');
+            const toggleIcon = document.getElementById('toggle-breakdown-icon');
+
+            if (!isBreakdownCollapsed) {
+                content.classList.add('expanded');
+                toggleText.textContent = 'Hide Detailed Financial Breakdown';
+                toggleIcon.classList.add('rotate-180'); // Rotate arrow up
+            } else {
+                content.classList.remove('expanded');
+                toggleText.textContent = 'Show Detailed Financial Breakdown';
+                toggleIcon.classList.remove('rotate-180'); // Rotate arrow down
+            }
+        }
+
+        /**
+         * Initializes the default values for the input fields.
+         */
+        function initializeInputs() {
+            for (const [id, value] of Object.entries(DEFAULT_VALUES)) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.value = value.toFixed(2);
+                }
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeInputs();
+            calculateProfit(); // Initial calculation and rendering
+
+            // Set up listener for auto-calculation on input changes
+            document.getElementById('profit-form').addEventListener('input', calculateProfit);
+
+            // Set up listener for the collapsible input button
+            document.getElementById('toggle-input-details').addEventListener('click', toggleInputDetails);
+
+            // NOTE: The listener for the breakdown button is attached inside renderResults() 
+            // because that element is constantly overwritten when the results change.
+
+            // Prevent default form submission
+            document.getElementById('profit-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                calculateProfit();
+            });
+        });
+    </script>
+
+</body>
+
+</html>

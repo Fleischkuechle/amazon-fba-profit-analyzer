@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FBA Profit Analyzer</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configure Tailwind for custom theme -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'fba-dark': '#1e293b', // Slate-800 equivalent
+                        'fba-medium': '#334155', // Slate-700 equivalent
+                        'fba-light': '#475569', // Slate-600 equivalent
+                        'profit-green': '#10b981', // Emerald-500
+                        'loss-red': '#ef4444', // Red-500
+                        'accent-blue': '#38bdf8', // Sky-400
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* General styling adjustments for better UX */
+        input[type="number"],
+        select {
+            background-color: #334155;
+            color: white;
+            border: 1px solid #475569;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: '#38bdf8';
+            /* Sky-400 */
+            box-shadow: 0 0 0 1px '#38bdf8';
+        }
+
+        /* Hide number input arrows */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Styling for the new label indicators */
+        .label-indicator {
+            font-weight: normal;
+            margin-top: 4px;
+            font-size: 0.75rem;
+            /* text-xs */
+            line-height: 1rem;
+            color: #94a3b8;
+            /* text-slate-400 */
+        }
+
+        /* Styling for the details summary button */
+        details summary {
+            cursor: pointer;
+            padding: 0.5rem 0;
+            outline: none;
+            list-style: none;
+            /* Hide default triangle on Chrome/Safari */
+            font-weight: 600;
+        }
+
+        /* Custom triangle for the details summary in browsers that support ::marker */
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        /* Add a custom arrow icon using Tailwind/CSS */
+        details summary::after {
+            content: '▼';
+            /* Down arrow */
+            float: right;
+            transition: transform 0.2s;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        details[open] summary::after {
+            content: '▲';
+            /* Up arrow */
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-fba-dark min-h-screen p-4 font-sans text-white">
+
+    <div class="max-w-2xl mx-auto">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-profit-green">FBA Profit Analyzer</h1>
+            <p class="text-fba-light mt-1 text-sm sm:text-base">Calculate your Amazon FBA profitability and key metrics.
+            </p>
+        </header>
+
+        <div class="bg-fba-medium p-4 sm:p-6 rounded-xl shadow-2xl space-y-6">
+
+            <!-- INPUTS SECTION -->
+            <section class="space-y-4">
+                <h2 class="text-xl font-bold text-gray-200 border-b border-fba-light pb-2">Primary Financial Inputs</h2>
+
+                <!-- Primary Inputs (Always Visible: Price & COGS) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <div>
+                        <label for="sellingPrice" class="flex flex-col text-sm font-medium text-gray-300">
+                            Selling Price ($)
+                            <span id="minPriceValue" class="label-indicator"></span>
+                        </label>
+                        <input type="number" id="sellingPrice" value="25.00" min="0.01" step="0.01"
+                            oninput="updateProfit()"
+                            class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+                    </div>
+
+                    <div>
+                        <label for="cogs" class="flex flex-col text-sm font-medium text-gray-300">
+                            Cost of Goods Sold (COGS) ($)
+                            <span id="maxCogsValueContainer" class="label-indicator"></span>
+                        </label>
+                        <input type="number" id="cogs" value="5.00" min="0" step="0.01" oninput="updateProfit()"
+                            class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+                    </div>
+                </div>
+
+                <!-- Collapsible Detail Inputs (Fees, Volume, and Target Profit) -->
+                <details class="rounded-xl bg-fba-light p-4 shadow-inner mt-6">
+                    <summary class="text-gray-200 hover:text-accent-blue transition-colors">Detailed Fees, Volume, &
+                        Target</summary>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-fba-medium mt-2">
+
+                        <!-- TARGET PROFIT -->
+                        <div>
+                            <label for="targetProfit" class="block text-sm font-medium text-gray-300">
+                                Target Net Profit ($)
+                            </label>
+                            <input type="number" id="targetProfit" value="5.00" min="0" step="0.01"
+                                oninput="updateProfit()"
+                                class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+                        </div>
+
+                        <div>
+                            <label for="referralRate" class="block text-sm font-medium text-gray-300">
+                                Amazon Referral Fee Rate (%)
+                            </label>
+                            <input type="number" id="referralRate" value="15" min="1" max="50" step="0.1"
+                                oninput="updateProfit()"
+                                class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+                        </div>
+
+                        <div>
+                            <label for="fbaFee" class="block text-sm font-medium text-gray-300">
+                                FBA Fulfillment Fee ($)
+                            </label>
+                            <input type="number" id="fbaFee" value="3.50" min="0" step="0.01" oninput="updateProfit()"
+                                class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+                        </div>
+
+                        <div>
+                            <label for="monthlyStorageFee" class="block text-sm font-medium text-gray-300">
+                                Monthly Storage Fee per Unit ($)
+                            </label>
+                            <input type="number" id="monthlyStorageFee" value="0.10" min="0" step="0.01"
+                                oninput="updateProfit()"
+                                class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+                        </div>
+
+                        <!-- NEW: Prep Costs -->
+                        <div>
+                            <label for="prepCosts" class="block text-sm font-medium text-gray-300">
+                                Prep & Labeling Costs ($)
+                            </label>
+                            <input type="number" id="prepCosts" value="0.50" min="0" step="0.01"
+                                oninput="updateProfit()"
+                                class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+                        </div>
+
+                        <!-- NEW: Shipping to FBA Costs -->
+                        <div>
+                            <label for="shipToFbaCosts" class="block text-sm font-medium text-gray-300">
+                                Shipping to FBA Costs ($)
+                            </label>
+                            <input type="number" id="shipToFbaCosts" value="0.50" min="0" step="0.01"
+                                oninput="updateProfit()"
+                                class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+                        </div>
+
+                        <!-- NEW: Miscellaneous Costs (The catch-all) -->
+                        <div>
+                            <label for="miscellaneousCosts" class="block text-sm font-medium text-gray-300">
+                                Miscellaneous Per-Unit Costs ($)
+                            </label>
+                            <input type="number" id="miscellaneousCosts" value="0.00" min="0" step="0.01"
+                                oninput="updateProfit()"
+                                class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+                        </div>
+
+                        <!-- Units Sold (now takes up both columns when needed) -->
+                        <div class="sm:col-span-2">
+                            <label for="unitsSold" class="block text-sm font-medium text-gray-300">
+                                Estimated Monthly Units Sold
+                            </label>
+                            <input type="number" id="unitsSold" value="300" min="1" step="1" oninput="updateProfit()"
+                                class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+                        </div>
+                    </div>
+                </details>
+
+            </section>
+
+            <hr class="border-fba-light">
+
+            <!-- RESULTS SECTION -->
+            <section>
+                <h2 class="text-xl font-bold text-gray-200 border-b border-fba-light pb-2 mb-4">Results Overview</h2>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+
+                    <!-- Box 1: Net Profit -->
+                    <div class="bg-fba-light p-3 rounded-lg shadow-lg">
+                        <p class="text-xs font-medium text-gray-300">Net Profit / Unit</p>
+                        <p id="netProfit"
+                            class="text-xl sm:text-2xl font-bold mt-1 text-center py-1 sm:py-2 rounded-lg transition-colors">
+                        </p>
+                    </div>
+
+                    <!-- Box 2: Profit Margin -->
+                    <div class="bg-fba-light p-3 rounded-lg shadow-lg">
+                        <p class="text-xs font-medium text-gray-300">Profit Margin</p>
+                        <p id="profitMargin"
+                            class="text-xl sm:text-2xl font-bold text-profit-green mt-1 text-center py-1 sm:py-2 rounded-lg">
+                        </p>
+                    </div>
+
+                    <!-- Box 3: ROI -->
+                    <div class="bg-fba-light p-3 rounded-lg shadow-lg">
+                        <p class="text-xs font-medium text-gray-300">ROI</p>
+                        <p id="roi"
+                            class="text-xl sm:text-2xl font-bold text-profit-green mt-1 text-center py-1 sm:py-2 rounded-lg">
+                        </p>
+                    </div>
+
+                    <!-- Box 4: Monthly Profit (Updated Label) -->
+                    <div class="bg-fba-light p-3 rounded-lg shadow-lg">
+                        <p class="text-xs font-medium text-gray-300">
+                            Monthly Profit (Based on <span id="unitsSoldDisplay">300</span> Units)
+                        </p>
+                        <p id="monthlyProfit"
+                            class="text-xl sm:text-2xl font-bold text-profit-green mt-1 text-center py-1 sm:py-2 rounded-lg">
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <hr class="border-fba-light">
+
+            <!-- FEES BREAKDOWN SECTION -->
+            <section>
+                <h2 class="text-xl font-bold text-gray-200 border-b border-fba-light pb-2 mb-4">Fee Breakdown (Per Unit)
+                </h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+                    <div class="flex justify-between items-center text-gray-300">
+                        <span>Referral Fee:</span>
+                        <span id="displayReferralFee" class="font-semibold text-accent-blue">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-gray-300">
+                        <span>FBA Fee:</span>
+                        <span id="displayFBAFee" class="font-semibold text-accent-blue">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-gray-300">
+                        <span>Storage Fee:</span>
+                        <span id="displayStorageFee" class="font-semibold text-accent-blue">$0.00</span>
+                    </div>
+                    <!-- Updated Label for Total Other Fixed Costs -->
+                    <div class="flex justify-between items-center text-gray-300">
+                        <span>Other Fixed Costs:</span>
+                        <span id="displayOtherCosts" class="font-semibold text-accent-blue">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center font-bold text-gray-100">
+                        <span>Total Costs:</span>
+                        <span id="displayTotalCosts" class="text-base text-loss-red">$0.00</span>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Formats a number into a currency string ($X.XX)
+         * @param {number} value - The number to format.
+         * @returns {string} - The formatted currency string.
+         */
+        function formatCurrency(value) {
+            // Use Math.max(0, value) to ensure we don't display a negative currency value in the labels.
+            return `$${Math.max(0, value).toFixed(2)}`;
+        }
+
+        /**
+         * Formats a number into a percentage string (X.X%)
+         * @param {number} value - The number to format.
+         * @returns {string} - The formatted percentage string.
+         */
+        function formatPercentage(value) {
+            return `${value.toFixed(1)}%`;
+        }
+
+        // Set up the initial listener on window load
+        window.onload = function () {
+            // Run the calculation once on page load with default values
+            updateProfit();
+        };
+
+        /**
+         * Main function to read inputs, perform calculations, and update the UI.
+         */
+        function updateProfit() {
+            // --- 1. Get Input Values and Sanitize ---
+            const sellingPrice = parseFloat(document.getElementById('sellingPrice').value) || 0;
+            const cogs = parseFloat(document.getElementById('cogs').value) || 0;
+            const referralRate = parseFloat(document.getElementById('referralRate').value) / 100 || 0;
+            const fbaFulfillmentFee = parseFloat(document.getElementById('fbaFee').value) || 0;
+            const monthlyStorageFee = parseFloat(document.getElementById('monthlyStorageFee').value) || 0;
+
+            // NEW: Separate Fixed Costs
+            const prepCosts = parseFloat(document.getElementById('prepCosts').value) || 0;
+            const shipToFbaCosts = parseFloat(document.getElementById('shipToFbaCosts').value) || 0;
+            const miscellaneousCosts = parseFloat(document.getElementById('miscellaneousCosts').value) || 0;
+
+            const unitsSold = parseInt(document.getElementById('unitsSold').value) || 0;
+            const targetProfit = parseFloat(document.getElementById('targetProfit').value) || 0;
+
+            // --- 2. Calculate Fees (Per Unit) ---
+            const referralFee = sellingPrice * referralRate;
+
+            // Sum of all 'Other Fixed Costs'
+            const totalOtherFixedCosts = prepCosts + shipToFbaCosts + miscellaneousCosts;
+
+            // Total cost per unit (excluding COGS and profit)
+            const totalFeesAndCostsPerUnit = referralFee + fbaFulfillmentFee + monthlyStorageFee + totalOtherFixedCosts;
+
+            // Total investment per unit (COGS + all fees)
+            const totalInvestmentPerUnit = cogs + totalFeesAndCostsPerUnit;
+
+            // --- 3. Calculate Profit Metrics (Per Unit) ---
+            const netProfit = sellingPrice - totalInvestmentPerUnit;
+
+            // Calculate Profit Margin: (Net Profit / Selling Price) * 100
+            const profitMargin = (sellingPrice > 0) ? (netProfit / sellingPrice) * 100 : 0;
+
+            // Calculate ROI: (Net Profit / Total Investment) * 100
+            const roi = (totalInvestmentPerUnit > 0) ? (netProfit / totalInvestmentPerUnit) * 100 : 0;
+
+            // --- 4. Calculate Total Monthly Profit ---
+            const monthlyProfit = netProfit * unitsSold;
+
+            // --- 5. Inverse Calculations for Key Metrics ---
+
+            // 5a. Calculate MAX COGS: The highest COGS allowed to hit the target profit
+            const maxCOGS = sellingPrice - totalFeesAndCostsPerUnit - targetProfit;
+
+            // 5b. Calculate MIN Selling Price: The lowest Selling Price needed to hit the target profit
+            const fixedCostForMinPrice = fbaFulfillmentFee + monthlyStorageFee + totalOtherFixedCosts + cogs;
+
+            let minSellingPrice = 0;
+            // The formula is: S = (Target Profit + Fixed Costs) / (1 - Referral Rate)
+            if (referralRate < 1) {
+                minSellingPrice = (targetProfit + fixedCostForMinPrice) / (1 - referralRate);
+            }
+
+            // --- 6. Update UI with Results ---
+
+            // Net Profit Box Styling
+            const netProfitElement = document.getElementById('netProfit');
+            netProfitElement.textContent = formatCurrency(netProfit);
+
+            netProfitElement.classList.remove('bg-profit-green', 'bg-loss-red', 'text-fba-dark', 'bg-yellow-400');
+            if (netProfit >= targetProfit) {
+                netProfitElement.classList.add('bg-profit-green', 'text-fba-dark');
+            } else if (netProfit >= 0) {
+                netProfitElement.classList.add('bg-yellow-400', 'text-fba-dark');
+            } else {
+                netProfitElement.classList.add('bg-loss-red', 'text-fba-dark');
+            }
+
+            // Other Boxes
+            document.getElementById('profitMargin').textContent = formatPercentage(profitMargin);
+            document.getElementById('roi').textContent = formatPercentage(roi);
+
+            // Update Monthly Profit Box
+            document.getElementById('unitsSoldDisplay').textContent = unitsSold.toLocaleString();
+            document.getElementById('monthlyProfit').textContent = formatCurrency(monthlyProfit);
+
+            // Fee Breakdown
+            document.getElementById('displayReferralFee').textContent = formatCurrency(referralFee);
+            document.getElementById('displayFBAFee').textContent = formatCurrency(fbaFulfillmentFee);
+            document.getElementById('displayStorageFee').textContent = formatCurrency(monthlyStorageFee);
+
+            // Display the sum of the new fixed costs
+            document.getElementById('displayOtherCosts').textContent = formatCurrency(totalOtherFixedCosts);
+
+            // Display Total Costs
+            document.getElementById('displayTotalCosts').textContent = formatCurrency(totalFeesAndCostsPerUnit + cogs);
+
+            // --- 7. Update Labels with Inverse Metrics ---
+
+            const minPriceValueContainer = document.getElementById('minPriceValue');
+            const maxCogsValueContainer = document.getElementById('maxCogsValueContainer');
+            const targetProfitText = formatCurrency(targetProfit);
+
+            // Update Selling Price Label content (Min Price)
+            const formattedMinPrice = formatCurrency(minSellingPrice);
+            let minPriceColorClass = (sellingPrice >= minSellingPrice) ? 'text-profit-green' : 'text-loss-red';
+
+            minPriceValueContainer.innerHTML = `
+                (<span class="font-semibold ${minPriceColorClass}">Min Price for ${targetProfitText} Profit: ${formattedMinPrice}</span>)
+            `;
+
+
+            // Update COGS Label content (Max COGS)
+            const maxCogsValue = maxCOGS;
+            const formattedMaxCOGS = formatCurrency(maxCogsValue);
+            let maxCogsColorClass = (cogs <= maxCogsValue) ? 'text-profit-green' : 'text-loss-red';
+
+            maxCogsValueContainer.innerHTML = `
+                (<span class="font-semibold ${maxCogsColorClass}">Max COGS for ${targetProfitText} Profit: ${formattedMaxCOGS}</span>)
+            `;
+        }
+    </script>
+</body>
+
+</html>
