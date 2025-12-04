@@ -106,7 +106,8 @@
 
             <!-- LANGUAGE SETTING -->
             <div class="flex justify-end mb-4">
-                <select id="languageSelector" onchange="setLanguage(this.value)" class="p-2 rounded-lg text-sm">
+                <select id="languageSelector" onchange="setLanguage(this.value)"
+                    class="p-2 rounded-lg text-sm bg-ebay-light text-white border border-ebay-light">
                     <option value="en" data-i18n="lang_en">English</option>
                     <option value="de" data-i18n="lang_de">German</option>
                 </select>
@@ -402,18 +403,63 @@
             }
         };
 
-        // Default language
+        // Default language (used if nothing is saved in localStorage)
         let currentLang = 'en';
 
         /**
-         * Updates the UI text based on the selected language.
+         * Saves all relevant input values to the browser's local storage.
+         */
+        function saveSettings() {
+            const inputs = [
+                'sellingPrice', 'cogs', 'targetProfit', 'ebayFeeRate',
+                'outboundShippingCost', 'promotedListingRate', 'prepCosts',
+                'miscellaneousCosts', 'unitsSold'
+            ];
+
+            inputs.forEach(id => {
+                const value = document.getElementById(id).value;
+                localStorage.setItem(`ebayCalc_${id}`, value);
+            });
+        }
+
+        /**
+         * Loads all saved input values and the language from local storage,
+         * updating the input fields and the currentLang variable.
+         */
+        function loadSettings() {
+            const inputs = [
+                'sellingPrice', 'cogs', 'targetProfit', 'ebayFeeRate',
+                'outboundShippingCost', 'promotedListingRate', 'prepCosts',
+                'miscellaneousCosts', 'unitsSold'
+            ];
+
+            inputs.forEach(id => {
+                const savedValue = localStorage.getItem(`ebayCalc_${id}`);
+                if (savedValue !== null) {
+                    document.getElementById(id).value = savedValue;
+                }
+            });
+
+            // Load saved language
+            const savedLang = localStorage.getItem('ebayCalc_language');
+            if (savedLang) {
+                document.getElementById('languageSelector').value = savedLang;
+                currentLang = savedLang;
+            }
+        }
+
+        /**
+         * Updates the UI text based on the selected language and saves the setting.
          * @param {string} lang - 'en' or 'de'.
          */
         function setLanguage(lang) {
             currentLang = lang;
             const langData = translations[lang];
 
-            // 1. Update all elements with data-i18n attribute
+            // 1. SAVE LANGUAGE TO LOCAL STORAGE
+            localStorage.setItem('ebayCalc_language', lang);
+
+            // 2. Update all elements with data-i18n attribute
             document.querySelectorAll('[data-i18n]').forEach(element => {
                 const key = element.getAttribute('data-i18n');
                 if (langData[key]) {
@@ -421,13 +467,13 @@
                 }
             });
 
-            // 2. Set the document title
+            // 3. Set the document title
             document.title = langData['title_app'];
 
-            // 3. Ensure the correct option in the selector is selected
+            // 4. Ensure the correct option in the selector is selected
             document.getElementById('languageSelector').value = lang;
 
-            // 4. Update the input label currency symbols (if applicable)
+            // 5. Update the input label currency symbols (if applicable)
             document.querySelector('[data-i18n="label_selling_price"]').textContent = langData['label_selling_price'];
             document.querySelector('[data-i18n="label_cogs"]').textContent = langData['label_cogs'];
             document.querySelector('[data-i18n="label_target_profit"]').textContent = langData['label_target_profit'];
@@ -435,9 +481,8 @@
             document.querySelector('[data-i18n="label_prep_costs"]').textContent = langData['label_prep_costs'];
             document.querySelector('[data-i18n="label_misc_costs"]').textContent = langData['label_misc_costs'];
 
-
-            // 5. Re-run profit calculation to update currency displays in results/labels
-            updateProfit();
+            // 6. Re-run profit calculation to update currency displays (but don't save settings, they were already loaded/set)
+            updateProfit(false);
         }
 
         /**
@@ -466,16 +511,11 @@
             return `${value.toFixed(1)}%`;
         }
 
-        // Set up the initial listener on window load
-        window.onload = function () {
-            // Check for saved language or default to 'en'
-            setLanguage(document.getElementById('languageSelector').value || 'en');
-        };
-
         /**
          * Main function to read inputs, perform calculations, and update the UI.
+         * @param {boolean} shouldSave - Flag to control if settings should be saved after update. Defaults to true for user input.
          */
-        function updateProfit() {
+        function updateProfit(shouldSave = true) {
             // --- 1. Get Input Values and Sanitize ---
             const sellingPrice = parseFloat(document.getElementById('sellingPrice').value) || 0;
             const cogs = parseFloat(document.getElementById('cogs').value) || 0;
@@ -604,7 +644,22 @@
             maxCogsValueContainer.innerHTML = `
                 (<span class="font-semibold ${maxCogsColorClass}">${langData['calc_max_cogs_pre']} ${targetProfitText} ${langData['calc_max_cogs_post']} ${formattedMaxCOGS}</span>)
             `;
+
+            // --- 9. Save Settings if triggered by user input ---
+            if (shouldSave) {
+                saveSettings();
+            }
         }
+
+        // Set up the initial listener on window load
+        window.onload = function () {
+            // 1. Load saved settings (values and language)
+            loadSettings();
+
+            // 2. Set language (which triggers the first updateProfit)
+            // We use the language value determined by loadSettings() or the default 'en'
+            setLanguage(currentLang);
+        };
     </script>
 </body>
 
