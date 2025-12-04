@@ -302,7 +302,31 @@
                                 </div>
                             </div>
 
-
+                            <!-- 2. PROJECT PROFIT ANNUALIZATION MODE SELECTION (x12 vs x1) -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2"
+                                    data-i18n="label_annualization_mode">
+                                    Projektgewinn für ZvE-Hochrechnung
+                                </label>
+                                <div id="annualizationModeSelection" class="grid grid-cols-1 gap-3">
+                                    <div id="annualization_mode_annual" onclick="setAnnualizationMode('annual')"
+                                        class="tax-scheme-option p-3 rounded-lg border border-ebay-light hover:border-accent-blue selected">
+                                        <p class="font-bold text-sm" data-i18n="annualization_mode_annual_title">
+                                            Jährliche Hochrechnung (x12)</p>
+                                        <p class="text-xs text-gray-400 mt-1"
+                                            data-i18n="annualization_mode_annual_desc">Der Monatsgewinn wird auf 12
+                                            Monate hochgerechnet (Standard & steuerlich korrekt).</p>
+                                    </div>
+                                    <div id="annualization_mode_monthly" onclick="setAnnualizationMode('monthly')"
+                                        class="tax-scheme-option p-3 rounded-lg border border-ebay-light hover:border-accent-blue">
+                                        <p class="font-bold text-sm" data-i18n="annualization_mode_monthly_title">Nur
+                                            Monatsgewinn (x1)</p>
+                                        <p class="text-xs text-gray-400 mt-1"
+                                            data-i18n="annualization_mode_monthly_desc">Die ESt wird nur basierend auf
+                                            dem Monatsgewinn berechnet (Momentaufnahme).</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <!-- End Modes Group -->
 
@@ -380,28 +404,7 @@
             <section>
                 <h2 class="text-xl font-bold text-gray-200 border-b border-ebay-light pb-2 mb-4" data-i18n="h2_results">
                     Ergebnisse im Überblick</h2>
-                <!-- 2. PROJECT PROFIT ANNUALIZATION MODE SELECTION (x12 vs x1) -->
-                <div>
 
-                    <div id="annualizationModeSelection" class="grid grid-cols-2 gap-3  mb-6">
-                        <div id="annualization_mode_annual" onclick="setAnnualizationMode('annual')"
-                            class="tax-scheme-option p-3 rounded-lg border border-ebay-light hover:border-accent-blue selected">
-                            <p class="font-bold text-sm" data-i18n="annualization_mode_annual_title">
-                                Jährliche Hochrechnung (x12)</p>
-                            <p class="text-xs text-gray-400 mt-1" data-i18n="annualization_mode_annual_desc">Der
-                                Monatsgewinn wird auf 12
-                                Monate hochgerechnet (Standard & steuerlich korrekt).</p>
-                        </div>
-                        <div id="annualization_mode_monthly" onclick="setAnnualizationMode('monthly')"
-                            class="tax-scheme-option p-3 rounded-lg border border-ebay-light hover:border-accent-blue">
-                            <p class="font-bold text-sm" data-i18n="annualization_mode_monthly_title">Nur
-                                Monatsgewinn (x1)</p>
-                            <p class="text-xs text-gray-400 mt-1" data-i18n="annualization_mode_monthly_desc">Die
-                                ESt wird nur basierend auf
-                                dem Monatsgewinn berechnet (Momentaufnahme).</p>
-                        </div>
-                    </div>
-                </div>
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
 
                     <!-- Box 1: Net Profit / Unit (Before Income Tax) -->
