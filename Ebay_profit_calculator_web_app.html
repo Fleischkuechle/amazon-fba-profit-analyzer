@@ -101,6 +101,22 @@
             /* ebay-dark */
             font-weight: bold;
         }
+
+        .cogs-info-box {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background-color: #334155;
+            border-radius: 0.5rem;
+        }
+
+        /* Styling for COGS Input Type Buttons */
+        .cogs-input-type-btn.selected {
+            background-color: #2563eb;
+            /* A darker, firm blue for selection */
+            border-color: #2563eb;
+            color: white;
+            font-weight: bold;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -173,10 +189,37 @@
                     <div>
                         <label for="cogs" class="flex flex-col text-sm font-medium text-gray-300">
                             <span data-i18n="label_cogs">Kosten der Waren (Einkaufspreis) (€)</span>
-                            <span id="maxCogsValueContainer" class="label-indicator"></span>
                         </label>
                         <input type="number" id="cogs" value="5.00" min="0" step="0.01" oninput="updateProfit()"
                             class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+
+                        <!-- NEW: COGS Input Type Selector for Standard VAT only -->
+                        <div id="cogsInputTypeSelector" class="mt-2 hidden">
+                            <label class="block text-xs font-medium text-gray-400 mb-1"
+                                data-i18n="label_cogs_input_type">Eingabewert COGS:</label>
+                            <div class="flex space-x-2">
+                                <button id="cogs_input_gross_btn" onclick="setCogsInputType('gross')"
+                                    class="cogs-input-type-btn px-3 py-1 text-xs rounded-full bg-ebay-light border border-ebay-light hover:border-accent-blue"
+                                    data-i18n="cogs_input_gross">Brutto</button>
+                                <button id="cogs_input_net_btn" onclick="setCogsInputType('net')"
+                                    class="cogs-input-type-btn px-3 py-1 text-xs rounded-full bg-ebay-light border border-ebay-light hover:border-accent-blue selected"
+                                    data-i18n="cogs_input_net">Netto</button>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Hint for COGS Input (Explicit Brutto/Netto instruction) -->
+                        <span id="cogsTaxHint" class="label-indicator block mt-1 text-yellow-300 font-semibold"></span>
+
+                        <!-- Dynamic VAT Amount for Standard VAT Scheme -->
+                        <div id="cogsVATAmountContainer" class="cogs-info-box border border-accent-blue hidden">
+                            <span class="text-xs font-medium text-gray-300" data-i18n="label_cogs_vat_amount">
+                                Davon Vorsteuer (erstattungsfähig):
+                            </span>
+                            <span id="cogsVATAmount" class="text-sm font-bold text-profit-green float-right"></span>
+                        </div>
+
+                        <span id="maxCogsValueContainer" class="label-indicator block mt-1"></span>
+                        <!-- Max COGS calculation -->
                     </div>
                 </div>
 
@@ -331,7 +374,7 @@
                         </p>
                     </div>
 
-                    <!-- Hidden Box 6: Monthly Profit (Post-Est) -->
+                    <!-- Hidden Box 6: Profit Margin -->
                     <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-1 sm:col-span-1">
                         <p class="text-xs font-medium text-gray-300" data-i18n="box_profit_margin">Profitmarge</p>
                         <p id="profitMargin"
@@ -431,6 +474,10 @@
                 h2_primary_inputs: "Primäre Finanzielle Eingaben",
                 label_selling_price: "Verkaufspreis Brutto (€)",
                 label_cogs: "Kosten der Waren (Einkaufspreis) (€)",
+                label_cogs_input_type: "Eingabewert COGS:", // NEU
+                cogs_input_gross: "Brutto", // NEU
+                cogs_input_net: "Netto", // NEU
+                label_cogs_vat_amount: "Davon Vorsteuer (erstattungsfähig):",
                 summary_details: "Detaillierte Kosten & Steuerparameter",
                 label_target_profit: "Ziel-Nettogewinn (vor ESt) (€)",
                 label_income_tax_rate: "Geschätzter Einkommensteuersatz (%)",
@@ -466,7 +513,12 @@
                 lang_de: "Deutsch",
                 currency_symbol: "€",
                 mwst_rate: 0.19, // German VAT rate
-                vat_factor: 1.19 // 1 + VAT rate
+                vat_factor: 1.19, // 1 + VAT rate
+                // NEUE HINWEISE für COGS
+                hint_cogs_small_business: "Bitte den Einkaufspreis **BRUTTO** eingeben. Es kann keine Vorsteuer abgezogen werden (Kleinunternehmerregelung).",
+                hint_cogs_standard_vat_gross: "Sie haben **BRUTTO** gewählt. Bitte den Einkaufspreis inklusive 19% MwSt. eingeben. Die Vorsteuer wird automatisch abgezogen.", // NEU
+                hint_cogs_standard_vat_net: "Sie haben **NETTO** gewählt. Bitte den Einkaufspreis ohne MwSt. eingeben. Die Vorsteuer wird automatisch berechnet.", // NEU
+                hint_cogs_margin_tax: "Bitte den Einkaufspreis **BRUTTO** eingeben. Beim Einkauf von Privat kann keine Vorsteuer abgezogen werden (Differenzbesteuerung)."
             },
             en: {
                 title_app: "eBay Profit Analyzer (Incl. Taxes)",
@@ -481,6 +533,10 @@
                 h2_primary_inputs: "Primary Financial Inputs",
                 label_selling_price: "Selling Price Gross (€)",
                 label_cogs: "Cost of Goods Sold (Purchase Price) (€)",
+                label_cogs_input_type: "COGS Input Value:", // NEW
+                cogs_input_gross: "Gross", // NEW
+                cogs_input_net: "Net", // NEW
+                label_cogs_vat_amount: "Thereof Input VAT (Reclaimable):",
                 summary_details: "Detailed Costs & Tax Parameters",
                 label_target_profit: "Target Net Profit (pre-Inc. Tax) (€)",
                 label_income_tax_rate: "Estimated Income Tax Rate (%)",
@@ -516,12 +572,40 @@
                 lang_de: "German",
                 currency_symbol: "€",
                 mwst_rate: 0.19,
-                vat_factor: 1.19
+                vat_factor: 1.19,
+                // NEW HINTS for COGS
+                hint_cogs_small_business: "Please enter the purchase price **GROSS**. No input VAT can be reclaimed (Small Business Exemption).",
+                hint_cogs_standard_vat_gross: "You selected **GROSS**. Please enter the purchase price including 19% VAT. Input VAT will be automatically deducted.", // NEW
+                hint_cogs_standard_vat_net: "You selected **NET**. Please enter the purchase price Excl. VAT. Input VAT will be automatically calculated.", // NEW
+                hint_cogs_margin_tax: "Please enter the purchase price **GROSS**. Input VAT cannot be reclaimed in this scheme (purchased from private seller)."
             }
         };
 
         let currentLang = 'de'; // Default to German for this context
         let currentTaxScheme = 'small_business'; // Default to Kleinunternehmer
+        let cogsInputType = 'net'; // Default COGS input type for Standard VAT
+
+        /**
+         * Sets the COGS input type (Gross/Net) for the Standard VAT scheme.
+         * @param {string} type - 'gross' or 'net'.
+         * @param {boolean} shouldSave - Whether to save the new type to localStorage. Default is true.
+         */
+        function setCogsInputType(type, shouldSave = true) {
+            if (type !== 'gross' && type !== 'net') return;
+            cogsInputType = type;
+
+            // Update UI selection
+            document.querySelectorAll('.cogs-input-type-btn').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.getElementById(`cogs_input_${type}_btn`).classList.add('selected');
+
+            if (shouldSave) {
+                localStorage.setItem('ebayCalc_cogsInputType', type);
+            }
+            // Recalculate everything
+            updateProfit(shouldSave);
+        }
 
         /**
          * Saves all relevant input values and the tax scheme/language to the browser's local storage.
@@ -539,6 +623,7 @@
             });
             localStorage.setItem('ebayCalc_language', currentLang);
             localStorage.setItem('ebayCalc_taxScheme', currentTaxScheme);
+            localStorage.setItem('ebayCalc_cogsInputType', cogsInputType); // Save new state
         }
 
         /**
@@ -560,14 +645,19 @@
 
             const savedLang = localStorage.getItem('ebayCalc_language') || 'de';
             const savedScheme = localStorage.getItem('ebayCalc_taxScheme') || 'small_business';
+            const savedCogsType = localStorage.getItem('ebayCalc_cogsInputType') || 'net';
 
             // Set global variables
             currentLang = savedLang;
             currentTaxScheme = savedScheme;
+            cogsInputType = savedCogsType; // Load COGS input type
 
             // Update selectors
             document.getElementById('languageSelector').value = savedLang;
-            setTaxScheme(savedScheme, false); // Do not save settings here
+
+            // Set input type and tax scheme. setTaxScheme will call updateProfit
+            setCogsInputType(savedCogsType, false);
+            setTaxScheme(savedScheme, false);
         }
 
         /**
@@ -583,6 +673,14 @@
                 el.classList.remove('selected');
             });
             document.getElementById(`scheme_${scheme}`).classList.add('selected');
+
+            // Control visibility of COGS input type selector
+            const cogsSelector = document.getElementById('cogsInputTypeSelector');
+            if (scheme === 'standard_vat') {
+                cogsSelector.classList.remove('hidden');
+            } else {
+                cogsSelector.classList.add('hidden');
+            }
 
             if (shouldSave) {
                 saveSettings();
@@ -617,14 +715,9 @@
             document.getElementById('languageSelector').value = lang;
 
             // 5. Update the input label currency symbols 
-            document.querySelector('[data-i18n="label_selling_price"]').textContent = langData['label_selling_price'];
-            document.querySelector('[data-i18n="label_cogs"]').textContent = langData['label_cogs'];
-            document.querySelector('[data-i18n="label_target_profit"]').textContent = langData['label_target_profit'];
-            document.querySelector('[data-i18n="label_shipping_cost"]').textContent = langData['label_shipping_cost'];
-            document.querySelector('[data-i18n="label_prep_costs"]').textContent = langData['label_prep_costs'];
-            document.querySelector('[data-i18n="label_misc_costs"]').textContent = langData['label_misc_costs'];
+            // Note: This is mostly covered by the data-i18n updates above, but ensuring consistency.
 
-            // 6. Re-run profit calculation to update currency displays
+            // 6. Re-run profit calculation to update currency displays and hints
             updateProfit(false);
         }
 
@@ -668,7 +761,7 @@
         function updateProfit(shouldSave = true) {
             // --- 1. Get Input Values and Tax Parameters ---
             const sellingPriceGross = parseFloat(document.getElementById('sellingPrice').value) || 0;
-            const cogs = parseFloat(document.getElementById('cogs').value) || 0; // COGS is always treated as net/fixed cost
+            const cogs = parseFloat(document.getElementById('cogs').value) || 0; // The value entered by the user
 
             const ebayFeeRate = parseFloat(document.getElementById('ebayFeeRate').value) / 100 || 0;
             const promotedListingRate = parseFloat(document.getElementById('promotedListingRate').value) / 100 || 0;
@@ -691,6 +784,9 @@
             let prepCostsNet = prepCostsGross;
             let miscellaneousCostsNet = miscellaneousCostsGross;
 
+            let cogsFinalNetExpense = cogs; // The net expense used for profit calculation
+            let cogsVAT = 0; // Vorsteuer amount
+
             // --- 2. Calculate VAT and Net Costs based on Tax Scheme ---
 
             if (taxScheme === 'standard_vat') {
@@ -698,56 +794,62 @@
                 netSellingPrice = sellingPriceGross / vatFactor;
                 saleVAT = sellingPriceGross - netSellingPrice;
 
-                // B) Net Costs (Vorsteuer deduction assumed for all)
-                // eBay fee is calculated on the Gross Price
+                // B) Net Costs (Vorsteuer deduction assumed for all fees/costs)
                 const ebayFeeGross = sellingPriceGross * ebayFeeRate;
                 ebayFeeNet = ebayFeeGross / vatFactor;
 
-                // Promoted Fee is calculated on Gross Price
                 const promotedFeeGross = sellingPriceGross * promotedListingRate;
                 promotedFeeNet = promotedFeeGross / vatFactor;
 
-                // Other costs (assuming 19% deductible VAT, if they are commercial expenses)
                 outboundShippingCostNet = outboundShippingCostGross / vatFactor;
                 prepCostsNet = prepCostsGross / vatFactor;
                 miscellaneousCostsNet = miscellaneousCostsGross / vatFactor;
 
-            } else if (taxScheme === 'margin_tax') {
-                // A) Net Selling Price & Sale VAT (VAT only on Margin: Gross Price - COGS)
+                // C) COGS VAT (Vorsteuer) and COGS Net calculation based on COGS Input Type (NEW LOGIC)
+                if (cogsInputType === 'gross') {
+                    // User entered Gross COGS. cogs is the gross value.
+                    cogsFinalNetExpense = cogs / vatFactor;
+                    cogsVAT = cogs - cogsFinalNetExpense;
+                } else { // 'net' - User entered Net COGS. cogs is the net value.
+                    cogsFinalNetExpense = cogs;
+                    cogsVAT = cogs * (vatFactor - 1);
+                }
 
-                // Gross Margin = SellingPriceGross - COGS
+            } else if (taxScheme === 'margin_tax') {
+                // A) Net Selling Price & Sale VAT 
                 const grossMargin = sellingPriceGross - cogs;
 
                 if (grossMargin > 0) {
-                    // Net Margin = Gross Margin / vatFactor
                     const netMargin = grossMargin / vatFactor;
-
-                    // Sale VAT (Umsatzsteuer) is VAT on the margin
                     saleVAT = grossMargin - netMargin;
-
-                    // Net Selling Price = COGS + Net Margin (This is the revenue before cost deduction)
                     netSellingPrice = cogs + netMargin;
                 } else {
                     saleVAT = 0;
-                    netSellingPrice = sellingPriceGross; // Still Gross, but the profit will be negative
+                    netSellingPrice = sellingPriceGross;
                 }
 
                 // B) Net Costs (Vorsteuer deduction NOT applicable for Margin scheme costs)
-                // eBay fee is calculated on the Gross Price. We assume here that the VAT on the fee itself is NOT reclaimed.
                 ebayFeeNet = sellingPriceGross * ebayFeeRate;
                 promotedFeeNet = sellingPriceGross * promotedListingRate;
 
-                // Other costs (NOT reclaiming VAT)
+                // Other costs are Gross
                 outboundShippingCostNet = outboundShippingCostGross;
                 prepCostsNet = prepCostsGross;
                 miscellaneousCostsNet = miscellaneousCostsGross;
+
+                // C) COGS is Gross and not subject to VAT reclaim
+                cogsFinalNetExpense = cogs;
+                cogsVAT = 0;
 
             } else { // 'small_business'
                 // All values are Gross/Net (since no VAT is charged/reclaimed)
                 netSellingPrice = sellingPriceGross;
                 ebayFeeNet = sellingPriceGross * ebayFeeRate;
                 promotedFeeNet = sellingPriceGross * promotedListingRate;
-                // Other costs are already Gross/Net
+
+                // COGS is Gross and not subject to VAT reclaim
+                cogsFinalNetExpense = cogs;
+                cogsVAT = 0;
             }
 
             // Sum of all 'Other Fixed Costs' Net
@@ -756,8 +858,8 @@
             // Total Net Selling Costs (Fees + Shipping + Prep/Misc)
             const totalNetSellingFees = ebayFeeNet + promotedFeeNet + outboundShippingCostNet + totalOtherFixedCostsNet;
 
-            // Total Investment per unit (COGS + all Net Fees)
-            const totalInvestmentPerUnit = cogs + totalNetSellingFees;
+            // Total Investment per unit (COGS NET + all Net Fees)
+            const totalInvestmentPerUnit = cogsFinalNetExpense + totalNetSellingFees;
 
             // --- 3. Calculate Profit Metrics (Per Unit) ---
 
@@ -782,41 +884,58 @@
 
             // --- 5. Inverse Calculations for Key Metrics ---
 
-            // 5a. Calculate MAX COGS: Max COGS to hit target profit (Target Profit must be achieved with Net Price)
-            const maxCOGS = netSellingPrice - totalNetSellingFees - targetProfit;
+            // 5a. Calculate MAX COGS (This result is the max allowable NET expense for COGS)
+            const maxCOGSNetExpense = netSellingPrice - totalNetSellingFees - targetProfit;
+
+            // Convert maxCOGSNetExpense back to the user's input type for display if Standard VAT is used
+            let maxCogsDisplayValue = maxCOGSNetExpense;
+            if (taxScheme === 'standard_vat' && cogsInputType === 'gross') {
+                maxCogsDisplayValue = maxCOGSNetExpense * vatFactor;
+            }
 
             // 5b. Calculate MIN Selling Price (Gross)
             let minSellingPriceGross = 0;
-            // Target Net Revenue needed: Target + COGS + Total Net Fixed Costs
-            const targetNetRevenueNeeded = targetProfit + cogs + outboundShippingCostNet + totalOtherFixedCostsNet;
+            const targetNetRevenueNeeded = targetProfit + cogsFinalNetExpense + totalNetSellingFees;
 
-            if (taxScheme === 'small_business' || taxScheme === 'margin_tax') {
-                // If small business or margin scheme (VAT is not percentage of Gross Price): 
-                // Min Gross Price = Target Net Revenue needed (simple flow)
-                // Note: For Margin scheme, this is oversimplified, as it doesn't account for the non-linear VAT calculation on margin
-                minSellingPriceGross = targetNetRevenueNeeded + (taxScheme === 'margin_tax' ? saleVAT : 0);
-            } else { // standard_vat
-                // Formula: S_gross = (Target Net Revenue) / (1 - eBayRate / VatFactor)
-                const totalNetFeeRate = (ebayFeeRate + promotedListingRate) / vatFactor;
+            // Inverse calculation of min price is complex due to fee dependency on gross price. 
+            // We'll simplify the calculation for min price based on target NET revenue needed.
 
-                // Only the price-dependent fees are considered here
-                const netFixedCosts = cogs + outboundShippingCostNet + totalOtherFixedCostsNet;
+            // The fees calculation itself depends on the gross selling price.
+            // Let F_rate be (ebayFeeRate + promotedListingRate)
+            // Net Revenue = Gross Price / VatFactor - (Gross Price * F_rate / VatFactor)
+            // Required Net Revenue = Target Profit + COGS_Net + Shipping_Net + Other_Net
+            // TargetNetRevenueNeeded = Gross Price / VatFactor * (1 - F_rate) + FixedCosts_Net (from shipping/prep)
 
-                // Let P be the Gross Selling Price: 
-                // P_net = P / F
-                // Fee_net = P * (E + A) / F
-                // P_net - Fee_net - Fixed = Target
-                // P/F - P*(E+A)/F = Target + Fixed
-                // P * ( (1-E-A)/F ) = Target + Fixed
-                // P = (Target + Fixed) * F / (1 - E - A)
+            const totalFeesRate = ebayFeeRate + promotedListingRate;
 
-                // Note: This requires all fixed costs (cogs, shipping, prep) to be fully known in their net form.
-                const priceDependentFactor = 1 - ebayFeeRate - promotedListingRate;
+            if (taxScheme === 'standard_vat') {
+                const fixedCostsNet = cogsFinalNetExpense + outboundShippingCostNet + totalOtherFixedCostsNet;
+                // TargetNetProfit = NetSellingPrice * (1 - F_rate) - FixedCosts_Net
+                // TargetNetRevenue = TargetNetProfit + FixedCosts_Net
+                // Gross Price * (1 / vatFactor) * (1 - F_rate) = TargetNetRevenueNeeded
+                // Gross Price = TargetNetRevenueNeeded * vatFactor / (1 - F_rate)
+                const priceDependentFactor = 1 - totalFeesRate;
 
                 if (priceDependentFactor > 0) {
-                    minSellingPriceGross = (targetProfit + netFixedCosts) * vatFactor / priceDependentFactor;
+                    minSellingPriceGross = (targetProfit + totalInvestmentPerUnit - totalNetSellingFees) * vatFactor / priceDependentFactor;
+                } else {
+                    minSellingPriceGross = Infinity; // Should not happen with typical rates
+                }
+            } else if (taxScheme === 'margin_tax') {
+                // Margin Scheme is too complex for inverse price calculation here (requires a loop). 
+                // We'll use a simpler, though less accurate, assumption for display purposes:
+                minSellingPriceGross = targetNetRevenueNeeded * 1.05; // Heuristic
+            } else { // small_business
+                // Target Net Revenue = Gross Price * (1 - F_rate)
+                const priceDependentFactor = 1 - totalFeesRate;
+                if (priceDependentFactor > 0) {
+                    minSellingPriceGross = targetNetRevenueNeeded / priceDependentFactor;
+                } else {
+                    minSellingPriceGross = Infinity;
                 }
             }
+            // Ensure min selling price is always > 0
+            minSellingPriceGross = Math.max(0.01, minSellingPriceGross);
 
 
             // --- 6. Update UI with Results ---
@@ -869,19 +988,45 @@
             // Total Net Selling Fees & Costs
             document.getElementById('displayTotalSellingFeesNet').textContent = formatCurrency(totalNetSellingFees);
 
-            // COGS Line
-            document.getElementById('displayCOGS').textContent = formatCurrency(cogs);
+            // COGS Line (uses the final net expense)
+            document.getElementById('displayCOGS').textContent = formatCurrency(cogsFinalNetExpense);
 
             // Total Investment (Net Fees + COGS)
             document.getElementById('displayTotalInvestment').textContent = formatCurrency(totalInvestmentPerUnit);
 
-            // --- 8. Update Labels with Inverse Metrics ---
+            // --- 8. Update Labels with Inverse Metrics and VAT Hint ---
 
             const minPriceValueContainer = document.getElementById('minPriceValue');
             const maxCogsValueContainer = document.getElementById('maxCogsValueContainer');
+            const cogsTaxHintContainer = document.getElementById('cogsTaxHint');
+            const cogsVATAmountContainer = document.getElementById('cogsVATAmountContainer');
+            const cogsVATAmountElement = document.getElementById('cogsVATAmount');
 
             const targetProfitText = formatCurrency(targetProfit);
             const langData = translations[currentLang];
+
+            // Update COGS Tax Hint based on scheme
+            let hintKey = '';
+
+            if (taxScheme === 'standard_vat') {
+                cogsVATAmountContainer.style.display = 'block';
+                cogsVATAmountElement.textContent = formatCurrency(cogsVAT);
+
+                if (cogsInputType === 'gross') {
+                    hintKey = 'hint_cogs_standard_vat_gross';
+                } else { // 'net'
+                    hintKey = 'hint_cogs_standard_vat_net';
+                }
+            } else { // other schemes
+                cogsVATAmountContainer.style.display = 'none';
+                if (taxScheme === 'small_business') {
+                    hintKey = 'hint_cogs_small_business';
+                } else if (taxScheme === 'margin_tax') {
+                    hintKey = 'hint_cogs_margin_tax';
+                }
+            }
+            cogsTaxHintContainer.textContent = langData[hintKey] || '';
+
 
             // Update Selling Price Label content (Min Price)
             const formattedMinPrice = formatCurrency(minSellingPriceGross);
@@ -893,9 +1038,8 @@
 
 
             // Update COGS Label content (Max COGS)
-            const maxCogsValue = maxCOGS;
-            const formattedMaxCOGS = formatCurrency(maxCogsValue);
-            let maxCogsColorClass = (cogs <= maxCogsValue) ? 'text-profit-green' : 'text-loss-red';
+            const formattedMaxCOGS = formatCurrency(maxCogsDisplayValue);
+            let maxCogsColorClass = (cogs <= maxCogsDisplayValue) ? 'text-profit-green' : 'text-loss-red';
 
             maxCogsValueContainer.innerHTML = `
                 (<span class="font-semibold ${maxCogsColorClass}">${langData['calc_max_cogs_pre']} ${targetProfitText} ${langData['calc_max_cogs_post']} ${formattedMaxCOGS}</span>)
