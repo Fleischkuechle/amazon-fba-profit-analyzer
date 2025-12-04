@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="title_app">eBay Profit Analyzer</title>
+    <title data-i18n="title_app">eBay Profit Rechner (inkl. Steuern)</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Configure Tailwind for custom theme -->
@@ -88,18 +88,31 @@
         details[open] summary::after {
             content: '▲';
         }
+
+        .tax-scheme-option {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .tax-scheme-option.selected {
+            background-color: #38bdf8;
+            /* accent-blue */
+            color: #1e293b;
+            /* ebay-dark */
+            font-weight: bold;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body class="bg-ebay-dark min-h-screen p-4 font-sans text-white">
 
-    <div class="max-w-2xl mx-auto">
+    <div class="max-w-3xl mx-auto">
         <header class="text-center mb-6">
-            <h1 class="text-3xl sm:text-4xl font-extrabold text-ebay-primary" data-i18n="title_app">eBay Profit Analyzer
-            </h1>
-            <p class="text-ebay-light mt-1 text-sm sm:text-base" data-i18n="subtitle_app">Calculate your eBay
-                profitability and key metrics.</p>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-ebay-primary" data-i18n="title_app">eBay Profit Rechner
+                (inkl. Steuern)</h1>
+            <p class="text-ebay-light mt-1 text-sm sm:text-base" data-i18n="subtitle_app">Berechnung von Rentabilität,
+                Steuern und Kennzahlen für Deutschland.</p>
         </header>
 
         <div class="bg-ebay-medium p-4 sm:p-6 rounded-xl shadow-2xl space-y-6">
@@ -108,22 +121,48 @@
             <div class="flex justify-end mb-4">
                 <select id="languageSelector" onchange="setLanguage(this.value)"
                     class="p-2 rounded-lg text-sm bg-ebay-light text-white border border-ebay-light">
+                    <option value="de" data-i18n="lang_de">Deutsch</option>
                     <option value="en" data-i18n="lang_en">English</option>
-                    <option value="de" data-i18n="lang_de">German</option>
                 </select>
             </div>
+
+            <!-- TAX SCHEME SELECTION -->
+            <section class="mb-6">
+                <h2 class="text-xl font-bold text-gray-200 border-b border-ebay-light pb-2 mb-4"
+                    data-i18n="h2_tax_scheme">Steuerliches Szenario wählen</h2>
+                <div id="taxSchemeSelection" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div id="scheme_small_business" onclick="setTaxScheme('small_business')"
+                        class="tax-scheme-option p-4 rounded-xl bg-ebay-light border border-ebay-light hover:border-accent-blue selected">
+                        <p class="font-bold" data-i18n="scheme_small_business_title">Kleinunternehmer</p>
+                        <p class="text-xs text-gray-400" data-i18n="scheme_small_business_desc">Keine MwSt. auf
+                            Verkäufe/Gebühren.</p>
+                    </div>
+                    <div id="scheme_standard_vat" onclick="setTaxScheme('standard_vat')"
+                        class="tax-scheme-option p-4 rounded-xl bg-ebay-light border border-ebay-light hover:border-accent-blue">
+                        <p class="font-bold" data-i18n="scheme_standard_vat_title">Standard-MwSt. (19%)</p>
+                        <p class="text-xs text-gray-400" data-i18n="scheme_standard_vat_desc">MwSt. auf Verkauf
+                            abführen, Vorsteuer auf Gebühren abziehen.</p>
+                    </div>
+                    <div id="scheme_margin_tax" onclick="setTaxScheme('margin_tax')"
+                        class="tax-scheme-option p-4 rounded-xl bg-ebay-light border border-ebay-light hover:border-accent-blue">
+                        <p class="font-bold" data-i18n="scheme_margin_tax_title">Differenzbesteuerung</p>
+                        <p class="text-xs text-gray-400" data-i18n="scheme_margin_tax_desc">MwSt. nur auf die Marge
+                            (Einkauf von Privat).</p>
+                    </div>
+                </div>
+            </section>
 
             <!-- INPUTS SECTION -->
             <section class="space-y-4">
                 <h2 class="text-xl font-bold text-gray-200 border-b border-ebay-light pb-2"
-                    data-i18n="h2_primary_inputs">Primary Financial Inputs</h2>
+                    data-i18n="h2_primary_inputs">Primäre Finanzielle Eingaben</h2>
 
                 <!-- Primary Inputs (Always Visible: Price & COGS) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                     <div>
                         <label for="sellingPrice" class="flex flex-col text-sm font-medium text-gray-300">
-                            <span data-i18n="label_selling_price">Selling Price ($)</span>
+                            <span data-i18n="label_selling_price">Verkaufspreis Brutto (€)</span>
                             <span id="minPriceValue" class="label-indicator"></span>
                         </label>
                         <input type="number" id="sellingPrice" value="25.00" min="0.01" step="0.01"
@@ -133,7 +172,7 @@
 
                     <div>
                         <label for="cogs" class="flex flex-col text-sm font-medium text-gray-300">
-                            <span data-i18n="label_cogs">Cost of Goods Sold (COGS) ($)</span>
+                            <span data-i18n="label_cogs">Kosten der Waren (Einkaufspreis) (€)</span>
                             <span id="maxCogsValueContainer" class="label-indicator"></span>
                         </label>
                         <input type="number" id="cogs" value="5.00" min="0" step="0.01" oninput="updateProfit()"
@@ -144,16 +183,27 @@
                 <!-- Collapsible Detail Inputs (Fees, Volume, and Target Profit) -->
                 <details class="rounded-xl bg-ebay-light p-4 shadow-inner mt-6">
                     <summary class="text-gray-200 hover:text-accent-blue transition-colors" data-i18n="summary_details">
-                        Detailed Fees, Shipping, & Target</summary>
+                        Detaillierte Kosten & Steuerparameter</summary>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-ebay-medium mt-2">
 
                         <!-- TARGET PROFIT -->
                         <div>
                             <label for="targetProfit" class="block text-sm font-medium text-gray-300"
                                 data-i18n="label_target_profit">
-                                Target Net Profit ($)
+                                Ziel-Nettogewinn (vor ESt) (€)
                             </label>
                             <input type="number" id="targetProfit" value="5.00" min="0" step="0.01"
+                                oninput="updateProfit()"
+                                class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
+                        </div>
+
+                        <!-- INCOME TAX RATE -->
+                        <div>
+                            <label for="incomeTaxRate" class="block text-sm font-medium text-gray-300"
+                                data-i18n="label_income_tax_rate">
+                                Geschätzter Einkommensteuersatz (%)
+                            </label>
+                            <input type="number" id="incomeTaxRate" value="25.00" min="0" max="50" step="1"
                                 oninput="updateProfit()"
                                 class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
                         </div>
@@ -161,7 +211,7 @@
                         <div>
                             <label for="ebayFeeRate" class="block text-sm font-medium text-gray-300"
                                 data-i18n="label_ebay_fee_rate">
-                                Total eBay Fee Rate (FVF + Payment Processing) (%)
+                                Gesamt-eBay-Gebührensatz (FVF + Zahlungsabwicklung) (%)
                             </label>
                             <input type="number" id="ebayFeeRate" value="13" min="1" max="50" step="0.1"
                                 oninput="updateProfit()"
@@ -172,7 +222,7 @@
                         <div>
                             <label for="outboundShippingCost" class="block text-sm font-medium text-gray-300"
                                 data-i18n="label_shipping_cost">
-                                Outbound Shipping Cost Paid by Seller ($)
+                                Versandkosten Brutto, bezahlt vom Verkäufer (€)
                             </label>
                             <input type="number" id="outboundShippingCost" value="5.00" min="0" step="0.01"
                                 oninput="updateProfit()"
@@ -194,7 +244,7 @@
                         <div>
                             <label for="prepCosts" class="block text-sm font-medium text-gray-300"
                                 data-i18n="label_prep_costs">
-                                Prep & Labeling Costs ($)
+                                Vorbereitungs- & Etikettierungskosten Brutto (€)
                             </label>
                             <input type="number" id="prepCosts" value="0.50" min="0" step="0.01"
                                 oninput="updateProfit()"
@@ -205,7 +255,7 @@
                         <div>
                             <label for="miscellaneousCosts" class="block text-sm font-medium text-gray-300"
                                 data-i18n="label_misc_costs">
-                                Miscellaneous Per-Unit Costs ($)
+                                Sonstige Stückkosten Brutto (€)
                             </label>
                             <input type="number" id="miscellaneousCosts" value="0.00" min="0" step="0.01"
                                 oninput="updateProfit()"
@@ -216,7 +266,7 @@
                         <div class="sm:col-span-2">
                             <label for="unitsSold" class="block text-sm font-medium text-gray-300"
                                 data-i18n="label_units_sold">
-                                Estimated Monthly Units Sold
+                                Geschätzte monatliche Verkaufseinheiten
                             </label>
                             <input type="number" id="unitsSold" value="300" min="1" step="1" oninput="updateProfit()"
                                 class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
@@ -231,42 +281,60 @@
             <!-- RESULTS SECTION -->
             <section>
                 <h2 class="text-xl font-bold text-gray-200 border-b border-ebay-light pb-2 mb-4" data-i18n="h2_results">
-                    Results Overview</h2>
+                    Ergebnisse im Überblick</h2>
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
 
-                    <!-- Box 1: Net Profit -->
-                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg">
-                        <p class="text-xs font-medium text-gray-300" data-i18n="box_net_profit">Net Profit / Unit</p>
-                        <p id="netProfit"
-                            class="text-xl sm:text-2xl font-bold mt-1 text-center py-1 sm:py-2 rounded-lg transition-colors">
+                    <!-- Box 1: Net Profit (Before Income Tax) -->
+                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-2 sm:col-span-2">
+                        <p class="text-xs font-medium text-gray-300" data-i18n="box_net_profit_pre_est">Netto-Profit /
+                            Einheit (vor ESt)</p>
+                        <p id="netProfitPreEst"
+                            class="text-xl sm:text-3xl font-bold mt-1 text-center py-1 sm:py-2 rounded-lg transition-colors">
                         </p>
                     </div>
 
-                    <!-- Box 2: Profit Margin -->
-                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg">
-                        <p class="text-xs font-medium text-gray-300" data-i18n="box_profit_margin">Profit Margin</p>
-                        <p id="profitMargin"
-                            class="text-xl sm:text-2xl font-bold text-profit-green mt-1 text-center py-1 sm:py-2 rounded-lg">
+                    <!-- Box 2: Final Profit (After Income Tax) -->
+                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-2 sm:col-span-2">
+                        <p class="text-xs font-medium text-gray-300" data-i18n="box_net_profit_post_est">Endgültiger
+                            Profit / Einheit (nach ESt)</p>
+                        <p id="netProfitPostEst"
+                            class="text-xl sm:text-3xl font-bold mt-1 text-center py-1 sm:py-2 rounded-lg transition-colors">
                         </p>
                     </div>
 
                     <!-- Box 3: ROI -->
-                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg">
+                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-1 sm:col-span-1">
                         <p class="text-xs font-medium text-gray-300" data-i18n="box_roi">ROI</p>
                         <p id="roi"
                             class="text-xl sm:text-2xl font-bold text-profit-green mt-1 text-center py-1 sm:py-2 rounded-lg">
                         </p>
                     </div>
 
-                    <!-- Box 4: Monthly Profit -->
-                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg">
-                        <p class="text-xs font-medium text-gray-300">
-                            <span data-i18n="box_monthly_profit_pre">Monthly Profit (Based on</span>
-                            <span id="unitsSoldDisplay">300</span>
-                            <span data-i18n="box_monthly_profit_post">Units)</span>
+                    <!-- Box 4: Monthly Profit (Pre-Est) -->
+                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-2 sm:col-span-2">
+                        <p class="text-xs font-medium text-gray-300" data-i18n="box_monthly_profit_pre_est_title">
+                            Geschätzter Monatsgewinn (vor ESt)
                         </p>
-                        <p id="monthlyProfit"
+                        <p id="monthlyProfitPreEst"
+                            class="text-xl sm:text-2xl font-bold text-profit-green mt-1 text-center py-1 sm:py-2 rounded-lg">
+                        </p>
+                    </div>
+
+                    <!-- Box 5: Income Tax Deduction -->
+                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-2 sm:col-span-2">
+                        <p class="text-xs font-medium text-gray-300" data-i18n="box_monthly_income_tax">
+                            Geschätzter ESt-Abzug
+                        </p>
+                        <p id="monthlyIncomeTax"
+                            class="text-xl sm:text-2xl font-bold text-loss-red mt-1 text-center py-1 sm:py-2 rounded-lg">
+                        </p>
+                    </div>
+
+                    <!-- Hidden Box 6: Monthly Profit (Post-Est) -->
+                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-1 sm:col-span-1">
+                        <p class="text-xs font-medium text-gray-300" data-i18n="box_profit_margin">Profitmarge</p>
+                        <p id="profitMargin"
                             class="text-xl sm:text-2xl font-bold text-profit-green mt-1 text-center py-1 sm:py-2 rounded-lg">
                         </p>
                     </div>
@@ -278,46 +346,67 @@
             <!-- UNIT COST BREAKDOWN SECTION -->
             <section>
                 <h2 class="text-xl font-bold text-gray-200 border-b border-ebay-light pb-2 mb-4"
-                    data-i18n="h2_breakdown">Unit Cost Breakdown</h2>
+                    data-i18n="h2_breakdown">Stückkosten-Aufschlüsselung (Netto-Basis)</h2>
                 <div class="grid grid-cols-3 gap-x-4 gap-y-2 text-sm">
 
                     <div class="flex justify-between items-center text-gray-300 col-span-2">
-                        <span data-i18n="breakdown_ebay_fee">Total eBay Fee (FVF + Payment):</span>
-                        <span id="displayEbayFee" class="font-semibold text-accent-blue"></span>
+                        <span data-i18n="breakdown_gross_selling_price">Brutto-Verkaufspreis:</span>
+                        <span id="displayGrossSellingPrice" class="font-semibold text-white"></span>
                     </div>
+
                     <div class="flex justify-between items-center text-gray-300 col-span-2">
-                        <span data-i18n="breakdown_promoted_fee">Promoted Listing Fee:</span>
-                        <span id="displayPromotedFee" class="font-semibold text-accent-blue"></span>
-                    </div>
-                    <div class="flex justify-between items-center text-gray-300 col-span-2">
-                        <span data-i18n="breakdown_shipping_cost">Outbound Shipping Cost:</span>
-                        <span id="displayShippingCost" class="font-semibold text-accent-blue"></span>
-                    </div>
-                    <div class="flex justify-between items-center text-gray-300 col-span-2">
-                        <span data-i18n="breakdown_prep_misc">Prep & Other Costs:</span>
-                        <span id="displayOtherFixedCostsCombined" class="font-semibold text-accent-blue"></span>
+                        <span data-i18n="breakdown_sale_vat">Abzuführende MwSt. (Umsatzsteuer):</span>
+                        <span id="displaySaleVAT" class="font-semibold text-loss-red"></span>
                     </div>
 
                     <!-- Line Divider -->
                     <div class="col-span-3 border-t border-ebay-medium pt-2 mb-1"></div>
 
-                    <!-- SUMMARY: Total Selling Fees -->
                     <div class="flex justify-between items-center font-bold text-gray-100 col-span-2">
-                        <span class="text-sm" data-i18n="breakdown_total_fees">TOTAL SELLING FEES & COSTS:</span>
-                        <span id="displayTotalSellingFees" class="text-base text-accent-blue font-extrabold"></span>
+                        <span data-i18n="breakdown_net_selling_price">NETTO-VERKAUFSPREIS (Einnahme):</span>
+                        <span id="displayNetSellingPrice" class="text-base font-extrabold text-profit-green"></span>
+                    </div>
+
+                    <!-- Line Divider -->
+                    <div class="col-span-3 border-t border-ebay-medium pt-2 mb-1"></div>
+
+                    <div class="flex justify-between items-center text-gray-300 col-span-2">
+                        <span data-i18n="breakdown_ebay_fee_net">eBay Gebühr Netto (abzgl. Vorsteuer):</span>
+                        <span id="displayEbayFeeNet" class="font-semibold text-accent-blue"></span>
+                    </div>
+                    <div class="flex justify-between items-center text-gray-300 col-span-2">
+                        <span data-i18n="breakdown_promoted_fee_net">Promoted Listing Gebühr Netto:</span>
+                        <span id="displayPromotedFeeNet" class="font-semibold text-accent-blue"></span>
+                    </div>
+                    <div class="flex justify-between items-center text-gray-300 col-span-2">
+                        <span data-i18n="breakdown_shipping_cost_net">Versandkosten Netto:</span>
+                        <span id="displayShippingCostNet" class="font-semibold text-accent-blue"></span>
+                    </div>
+                    <div class="flex justify-between items-center text-gray-300 col-span-2">
+                        <span data-i18n="breakdown_prep_misc_net">Vorbereitungs- & Sonstige Kosten Netto:</span>
+                        <span id="displayOtherFixedCostsCombinedNet" class="font-semibold text-accent-blue"></span>
+                    </div>
+
+                    <!-- Line Divider -->
+                    <div class="col-span-3 border-t border-ebay-medium pt-2 mb-1"></div>
+
+                    <!-- SUMMARY: Total Selling Fees NET -->
+                    <div class="flex justify-between items-center font-bold text-gray-100 col-span-2">
+                        <span class="text-sm" data-i18n="breakdown_total_fees_net">TOTAL NETTO-VERKAUFSKOSTEN:</span>
+                        <span id="displayTotalSellingFeesNet" class="text-base text-accent-blue font-extrabold"></span>
                     </div>
 
                     <!-- COGS Line Item -->
                     <div class="flex justify-between items-center text-gray-100 col-span-2">
-                        <span class="text-sm" data-i18n="breakdown_cogs">COST OF GOODS SOLD (COGS):</span>
+                        <span class="text-sm" data-i18n="breakdown_cogs">KOSTEN DER WAREN (COGS):</span>
                         <span id="displayCOGS" class="text-base font-extrabold text-white"></span>
                     </div>
 
                     <!-- FINAL SUMMARY: Total Investment -->
                     <div
                         class="flex justify-between items-center font-bold text-gray-100 col-span-2 mt-2 pt-2 border-t border-accent-blue">
-                        <span class="text-base" data-i18n="breakdown_total_investment">TOTAL INVESTMENT (PRICE
-                            FLOOR):</span>
+                        <span class="text-base" data-i18n="breakdown_total_investment">GESAMTINVESTITION NETTO
+                            (KOSTENBLOCK):</span>
                         <span id="displayTotalInvestment" class="text-lg text-loss-red font-extrabold"></span>
                     </div>
                 </div>
@@ -329,108 +418,137 @@
     <script>
         // --- TRANSLATION DATA ---
         const translations = {
-            en: {
-                title_app: "eBay Profit Analyzer",
-                subtitle_app: "Calculate your eBay profitability and key metrics.",
-                h2_primary_inputs: "Primary Financial Inputs",
-                label_selling_price: "Selling Price ($)",
-                label_cogs: "Cost of Goods Sold (COGS) ($)",
-                summary_details: "Detailed Fees, Shipping, & Target",
-                label_target_profit: "Target Net Profit ($)",
-                label_ebay_fee_rate: "Total eBay Fee Rate (FVF + Payment Processing) (%)",
-                label_shipping_cost: "Outbound Shipping Cost Paid by Seller ($)",
+            de: {
+                title_app: "eBay Profit Rechner (inkl. Steuern)",
+                subtitle_app: "Berechnung von Rentabilität, Steuern und Kennzahlen für Deutschland.",
+                h2_tax_scheme: "Steuerliches Szenario wählen",
+                scheme_small_business_title: "Kleinunternehmer",
+                scheme_small_business_desc: "Keine MwSt. auf Verkäufe/Gebühren.",
+                scheme_standard_vat_title: "Standard-MwSt. (19%)",
+                scheme_standard_vat_desc: "MwSt. auf Verkauf abführen, Vorsteuer auf Gebühren abziehen.",
+                scheme_margin_tax_title: "Differenzbesteuerung",
+                scheme_margin_tax_desc: "MwSt. nur auf die Marge (Einkauf von Privat).",
+                h2_primary_inputs: "Primäre Finanzielle Eingaben",
+                label_selling_price: "Verkaufspreis Brutto (€)",
+                label_cogs: "Kosten der Waren (Einkaufspreis) (€)",
+                summary_details: "Detaillierte Kosten & Steuerparameter",
+                label_target_profit: "Ziel-Nettogewinn (vor ESt) (€)",
+                label_income_tax_rate: "Geschätzter Einkommensteuersatz (%)",
+                label_ebay_fee_rate: "Gesamt-eBay-Gebührensatz (%)",
+                label_shipping_cost: "Versandkosten Brutto, bezahlt vom Verkäufer (€)",
                 label_promoted_rate: "Promoted Listing Rate (Ad Spend) (%)",
-                label_prep_costs: "Prep & Labeling Costs ($)",
-                label_misc_costs: "Miscellaneous Per-Unit Costs ($)",
+                label_prep_costs: "Vorbereitungs- & Etikettierungskosten Brutto (€)",
+                label_misc_costs: "Sonstige Stückkosten Brutto (€)",
+                label_units_sold: "Geschätzte monatliche Verkaufseinheiten",
+                h2_results: "Ergebnisse im Überblick",
+                box_net_profit_pre_est: "Netto-Profit / Einheit (vor ESt)",
+                box_net_profit_post_est: "Endgültiger Profit / Einheit (nach ESt)",
+                box_profit_margin: "Profitmarge",
+                box_roi: "ROI",
+                box_monthly_profit_pre_est_title: "Geschätzter Monatsgewinn (vor ESt)",
+                box_monthly_income_tax: "Geschätzter ESt-Abzug",
+                h2_breakdown: "Stückkosten-Aufschlüsselung (Netto-Basis)",
+                breakdown_gross_selling_price: "Brutto-Verkaufspreis:",
+                breakdown_sale_vat: "Abzuführende MwSt. (Umsatzsteuer):",
+                breakdown_net_selling_price: "NETTO-VERKAUFSPREIS (Einnahme):",
+                breakdown_ebay_fee_net: "eBay Gebühr Netto (abzgl. Vorsteuer):",
+                breakdown_promoted_fee_net: "Promoted Listing Gebühr Netto:",
+                breakdown_shipping_cost_net: "Versandkosten Netto:",
+                breakdown_prep_misc_net: "Vorbereitungs- & Sonstige Kosten Netto:",
+                breakdown_total_fees_net: "TOTAL NETTO-VERKAUFSKOSTEN:",
+                breakdown_cogs: "KOSTEN DER WAREN (COGS):",
+                breakdown_total_investment: "GESAMTINVESTITION NETTO (KOSTENBLOCK):",
+                calc_min_price_pre: "Min. Brutto-Preis für",
+                calc_min_price_post: "Profit:",
+                calc_max_cogs_pre: "Max. COGS für",
+                calc_max_cogs_post: "Profit:",
+                lang_en: "English",
+                lang_de: "Deutsch",
+                currency_symbol: "€",
+                mwst_rate: 0.19, // German VAT rate
+                vat_factor: 1.19 // 1 + VAT rate
+            },
+            en: {
+                title_app: "eBay Profit Analyzer (Incl. Taxes)",
+                subtitle_app: "Calculate eBay profitability and key metrics including German taxes.",
+                h2_tax_scheme: "Select Tax Scheme",
+                scheme_small_business_title: "Small Business Owner",
+                scheme_small_business_desc: "No VAT charged on sales or deducted on fees.",
+                scheme_standard_vat_title: "Standard VAT (19%)",
+                scheme_standard_vat_desc: "Pay VAT on sales, reclaim VAT (input tax) on fees.",
+                scheme_margin_tax_title: "Margin Scheme Tax",
+                scheme_margin_tax_desc: "VAT only on the margin (purchased from private sellers).",
+                h2_primary_inputs: "Primary Financial Inputs",
+                label_selling_price: "Selling Price Gross (€)",
+                label_cogs: "Cost of Goods Sold (Purchase Price) (€)",
+                summary_details: "Detailed Costs & Tax Parameters",
+                label_target_profit: "Target Net Profit (pre-Inc. Tax) (€)",
+                label_income_tax_rate: "Estimated Income Tax Rate (%)",
+                label_ebay_fee_rate: "Total eBay Fee Rate (%)",
+                label_shipping_cost: "Outbound Shipping Cost Gross (€)",
+                label_promoted_rate: "Promoted Listing Rate (Ad Spend) (%)",
+                label_prep_costs: "Prep & Labeling Costs Gross (€)",
+                label_misc_costs: "Miscellaneous Per-Unit Costs Gross (€)",
                 label_units_sold: "Estimated Monthly Units Sold",
                 h2_results: "Results Overview",
-                box_net_profit: "Net Profit / Unit",
+                box_net_profit_pre_est: "Net Profit / Unit (pre-Inc. Tax)",
+                box_net_profit_post_est: "Final Profit / Unit (post-Inc. Tax)",
                 box_profit_margin: "Profit Margin",
                 box_roi: "ROI",
-                box_monthly_profit_pre: "Monthly Profit (Based on",
-                box_monthly_profit_post: "Units)",
-                h2_breakdown: "Unit Cost Breakdown",
-                breakdown_ebay_fee: "Total eBay Fee (FVF + Payment):",
-                breakdown_promoted_fee: "Promoted Listing Fee:",
-                breakdown_shipping_cost: "Outbound Shipping Cost:",
-                breakdown_prep_misc: "Prep & Other Costs:",
-                breakdown_total_fees: "TOTAL SELLING FEES & COSTS:",
+                box_monthly_profit_pre_est_title: "Estimated Monthly Profit (pre-Inc. Tax)",
+                box_monthly_income_tax: "Estimated Inc. Tax Deduction",
+                h2_breakdown: "Unit Cost Breakdown (Net Basis)",
+                breakdown_gross_selling_price: "Gross Selling Price:",
+                breakdown_sale_vat: "VAT to be remitted (Sales Tax):",
+                breakdown_net_selling_price: "NET SELLING PRICE (Revenue):",
+                breakdown_ebay_fee_net: "eBay Fee Net (less input tax):",
+                breakdown_promoted_fee_net: "Promoted Listing Fee Net:",
+                breakdown_shipping_cost_net: "Shipping Cost Net:",
+                breakdown_prep_misc_net: "Prep & Other Costs Net:",
+                breakdown_total_fees_net: "TOTAL NET SELLING COSTS:",
                 breakdown_cogs: "COST OF GOODS SOLD (COGS):",
-                breakdown_total_investment: "TOTAL INVESTMENT (PRICE FLOOR):",
-                calc_min_price_pre: "Min Price for",
+                breakdown_total_investment: "TOTAL NET INVESTMENT (COST BLOCK):",
+                calc_min_price_pre: "Min. Gross Price for",
                 calc_min_price_post: "Profit:",
-                calc_max_cogs_pre: "Max COGS for",
+                calc_max_cogs_pre: "Max. COGS for",
                 calc_max_cogs_post: "Profit:",
                 lang_en: "English",
                 lang_de: "German",
-                currency_symbol: "$",
-            },
-            de: {
-                title_app: "eBay Gewinnrechner",
-                subtitle_app: "Berechne deine eBay-Rentabilität und Kennzahlen.",
-                h2_primary_inputs: "Primäre finanzielle Eingaben",
-                label_selling_price: "Verkaufspreis (€)",
-                label_cogs: "Kosten der verkauften Waren (COGS) (€)",
-                summary_details: "Detaillierte Gebühren, Versand & Zielvorgabe",
-                label_target_profit: "Ziel-Nettogewinn (€)",
-                label_ebay_fee_rate: "Gesamt-eBay-Gebührensatz (FVF + Zahlungsabwicklung) (%)",
-                label_shipping_cost: "Versandkosten, bezahlt vom Verkäufer (€)",
-                label_promoted_rate: "Promoted Listing Rate (Werbeausgaben) (%)",
-                label_prep_costs: "Vorbereitungs- & Etikettierungskosten (€)",
-                label_misc_costs: "Verschiedene Stückkosten (€)",
-                label_units_sold: "Geschätzte monatliche Verkaufseinheiten",
-                h2_results: "Ergebnisse im Überblick",
-                box_net_profit: "Nettogewinn / Einheit",
-                box_profit_margin: "Gewinnmarge",
-                box_roi: "ROI",
-                box_monthly_profit_pre: "Monatlicher Gewinn (Basierend auf",
-                box_monthly_profit_post: "Einheiten)",
-                h2_breakdown: "Stückkosten-Aufschlüsselung",
-                breakdown_ebay_fee: "Gesamt-eBay-Gebühr (FVF + Zahlung):",
-                breakdown_promoted_fee: "Promoted Listing Gebühr:",
-                breakdown_shipping_cost: "Versandkosten:",
-                breakdown_prep_misc: "Vorbereitungs- & Sonstige Kosten:",
-                breakdown_total_fees: "GESAMTKOSTEN VERKAUF & GEBÜHREN:",
-                breakdown_cogs: "KOSTEN DER VERKAUFTEN WAREN (COGS):",
-                breakdown_total_investment: "GESAMTINVESTITION (PREISUNTERGRENZE):",
-                calc_min_price_pre: "Mindestpreis für",
-                calc_min_price_post: "Gewinn:",
-                calc_max_cogs_pre: "Max. COGS für",
-                calc_max_cogs_post: "Gewinn:",
-                lang_en: "Englisch",
-                lang_de: "Deutsch",
                 currency_symbol: "€",
+                mwst_rate: 0.19,
+                vat_factor: 1.19
             }
         };
 
-        // Default language (used if nothing is saved in localStorage)
-        let currentLang = 'en';
+        let currentLang = 'de'; // Default to German for this context
+        let currentTaxScheme = 'small_business'; // Default to Kleinunternehmer
 
         /**
-         * Saves all relevant input values to the browser's local storage.
+         * Saves all relevant input values and the tax scheme/language to the browser's local storage.
          */
         function saveSettings() {
             const inputs = [
                 'sellingPrice', 'cogs', 'targetProfit', 'ebayFeeRate',
                 'outboundShippingCost', 'promotedListingRate', 'prepCosts',
-                'miscellaneousCosts', 'unitsSold'
+                'miscellaneousCosts', 'unitsSold', 'incomeTaxRate'
             ];
 
             inputs.forEach(id => {
                 const value = document.getElementById(id).value;
                 localStorage.setItem(`ebayCalc_${id}`, value);
             });
+            localStorage.setItem('ebayCalc_language', currentLang);
+            localStorage.setItem('ebayCalc_taxScheme', currentTaxScheme);
         }
 
         /**
-         * Loads all saved input values and the language from local storage,
-         * updating the input fields and the currentLang variable.
+         * Loads all saved input values, language, and tax scheme from local storage.
          */
         function loadSettings() {
             const inputs = [
                 'sellingPrice', 'cogs', 'targetProfit', 'ebayFeeRate',
                 'outboundShippingCost', 'promotedListingRate', 'prepCosts',
-                'miscellaneousCosts', 'unitsSold'
+                'miscellaneousCosts', 'unitsSold', 'incomeTaxRate'
             ];
 
             inputs.forEach(id => {
@@ -440,12 +558,37 @@
                 }
             });
 
-            // Load saved language
-            const savedLang = localStorage.getItem('ebayCalc_language');
-            if (savedLang) {
-                document.getElementById('languageSelector').value = savedLang;
-                currentLang = savedLang;
+            const savedLang = localStorage.getItem('ebayCalc_language') || 'de';
+            const savedScheme = localStorage.getItem('ebayCalc_taxScheme') || 'small_business';
+
+            // Set global variables
+            currentLang = savedLang;
+            currentTaxScheme = savedScheme;
+
+            // Update selectors
+            document.getElementById('languageSelector').value = savedLang;
+            setTaxScheme(savedScheme, false); // Do not save settings here
+        }
+
+        /**
+         * Sets the tax scheme and triggers an update.
+         * @param {string} scheme - 'small_business', 'standard_vat', or 'margin_tax'.
+         * @param {boolean} shouldSave - Whether to save the new scheme to localStorage. Default is true.
+         */
+        function setTaxScheme(scheme, shouldSave = true) {
+            currentTaxScheme = scheme;
+
+            // Update UI selection
+            document.querySelectorAll('.tax-scheme-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.getElementById(`scheme_${scheme}`).classList.add('selected');
+
+            if (shouldSave) {
+                saveSettings();
             }
+            // Recalculate everything
+            updateProfit(shouldSave);
         }
 
         /**
@@ -473,7 +616,7 @@
             // 4. Ensure the correct option in the selector is selected
             document.getElementById('languageSelector').value = lang;
 
-            // 5. Update the input label currency symbols (if applicable)
+            // 5. Update the input label currency symbols 
             document.querySelector('[data-i18n="label_selling_price"]').textContent = langData['label_selling_price'];
             document.querySelector('[data-i18n="label_cogs"]').textContent = langData['label_cogs'];
             document.querySelector('[data-i18n="label_target_profit"]').textContent = langData['label_target_profit'];
@@ -481,7 +624,7 @@
             document.querySelector('[data-i18n="label_prep_costs"]').textContent = langData['label_prep_costs'];
             document.querySelector('[data-i18n="label_misc_costs"]').textContent = langData['label_misc_costs'];
 
-            // 6. Re-run profit calculation to update currency displays (but don't save settings, they were already loaded/set)
+            // 6. Re-run profit calculation to update currency displays
             updateProfit(false);
         }
 
@@ -489,7 +632,14 @@
          * Returns the correct currency symbol for the current language.
          */
         function getCurrencySymbol() {
-            return translations[currentLang]?.currency_symbol || '$';
+            return translations[currentLang]?.currency_symbol || '€';
+        }
+
+        /**
+         * Returns the VAT factor (1 + VAT Rate) for the current language.
+         */
+        function getVatFactor() {
+            return translations[currentLang]?.vat_factor || 1.19;
         }
 
         /**
@@ -499,7 +649,7 @@
          */
         function formatCurrency(value) {
             const symbol = getCurrencySymbol();
-            return `${symbol}${Math.max(0, value).toFixed(2)}`;
+            return `${symbol}${value.toFixed(2)}`;
         }
 
         /**
@@ -516,107 +666,213 @@
          * @param {boolean} shouldSave - Flag to control if settings should be saved after update. Defaults to true for user input.
          */
         function updateProfit(shouldSave = true) {
-            // --- 1. Get Input Values and Sanitize ---
-            const sellingPrice = parseFloat(document.getElementById('sellingPrice').value) || 0;
-            const cogs = parseFloat(document.getElementById('cogs').value) || 0;
+            // --- 1. Get Input Values and Tax Parameters ---
+            const sellingPriceGross = parseFloat(document.getElementById('sellingPrice').value) || 0;
+            const cogs = parseFloat(document.getElementById('cogs').value) || 0; // COGS is always treated as net/fixed cost
 
-            // eBay Specific Fees
             const ebayFeeRate = parseFloat(document.getElementById('ebayFeeRate').value) / 100 || 0;
             const promotedListingRate = parseFloat(document.getElementById('promotedListingRate').value) / 100 || 0;
-            const outboundShippingCost = parseFloat(document.getElementById('outboundShippingCost').value) || 0;
-
-            // Other Fixed Costs
-            const prepCosts = parseFloat(document.getElementById('prepCosts').value) || 0;
-            const miscellaneousCosts = parseFloat(document.getElementById('miscellaneousCosts').value) || 0;
+            const outboundShippingCostGross = parseFloat(document.getElementById('outboundShippingCost').value) || 0;
+            const prepCostsGross = parseFloat(document.getElementById('prepCosts').value) || 0;
+            const miscellaneousCostsGross = parseFloat(document.getElementById('miscellaneousCosts').value) || 0;
 
             const unitsSold = parseInt(document.getElementById('unitsSold').value) || 0;
             const targetProfit = parseFloat(document.getElementById('targetProfit').value) || 0;
+            const incomeTaxRate = parseFloat(document.getElementById('incomeTaxRate').value) / 100 || 0;
 
-            // --- 2. Calculate Fees (Per Unit) ---
+            const vatFactor = getVatFactor(); // 1.19
+            const taxScheme = currentTaxScheme;
 
-            // eBay Fee (FVF + Managed Payments)
-            const ebayFee = sellingPrice * ebayFeeRate;
+            let saleVAT = 0;
+            let netSellingPrice = sellingPriceGross; // Default for small_business
+            let ebayFeeNet = 0;
+            let promotedFeeNet = 0;
+            let outboundShippingCostNet = outboundShippingCostGross;
+            let prepCostsNet = prepCostsGross;
+            let miscellaneousCostsNet = miscellaneousCostsGross;
 
-            // Promoted Listing Fee
-            const promotedFee = sellingPrice * promotedListingRate;
+            // --- 2. Calculate VAT and Net Costs based on Tax Scheme ---
 
-            // Sum of all 'Other Fixed Costs'
-            const totalOtherFixedCosts = prepCosts + miscellaneousCosts;
+            if (taxScheme === 'standard_vat') {
+                // A) Net Selling Price & Sale VAT
+                netSellingPrice = sellingPriceGross / vatFactor;
+                saleVAT = sellingPriceGross - netSellingPrice;
 
-            // Total cost per unit (excluding COGS and profit) -> This is the TOTAL SELLING FEES & COSTS
-            const totalFeesAndCostsPerUnit = ebayFee + promotedFee + outboundShippingCost + totalOtherFixedCosts;
+                // B) Net Costs (Vorsteuer deduction assumed for all)
+                // eBay fee is calculated on the Gross Price
+                const ebayFeeGross = sellingPriceGross * ebayFeeRate;
+                ebayFeeNet = ebayFeeGross / vatFactor;
 
-            // Total investment per unit (COGS + all fees) -> This is the TOTAL INVESTMENT
-            const totalInvestmentPerUnit = cogs + totalFeesAndCostsPerUnit;
+                // Promoted Fee is calculated on Gross Price
+                const promotedFeeGross = sellingPriceGross * promotedListingRate;
+                promotedFeeNet = promotedFeeGross / vatFactor;
+
+                // Other costs (assuming 19% deductible VAT, if they are commercial expenses)
+                outboundShippingCostNet = outboundShippingCostGross / vatFactor;
+                prepCostsNet = prepCostsGross / vatFactor;
+                miscellaneousCostsNet = miscellaneousCostsGross / vatFactor;
+
+            } else if (taxScheme === 'margin_tax') {
+                // A) Net Selling Price & Sale VAT (VAT only on Margin: Gross Price - COGS)
+
+                // Gross Margin = SellingPriceGross - COGS
+                const grossMargin = sellingPriceGross - cogs;
+
+                if (grossMargin > 0) {
+                    // Net Margin = Gross Margin / vatFactor
+                    const netMargin = grossMargin / vatFactor;
+
+                    // Sale VAT (Umsatzsteuer) is VAT on the margin
+                    saleVAT = grossMargin - netMargin;
+
+                    // Net Selling Price = COGS + Net Margin (This is the revenue before cost deduction)
+                    netSellingPrice = cogs + netMargin;
+                } else {
+                    saleVAT = 0;
+                    netSellingPrice = sellingPriceGross; // Still Gross, but the profit will be negative
+                }
+
+                // B) Net Costs (Vorsteuer deduction NOT applicable for Margin scheme costs)
+                // eBay fee is calculated on the Gross Price. We assume here that the VAT on the fee itself is NOT reclaimed.
+                ebayFeeNet = sellingPriceGross * ebayFeeRate;
+                promotedFeeNet = sellingPriceGross * promotedListingRate;
+
+                // Other costs (NOT reclaiming VAT)
+                outboundShippingCostNet = outboundShippingCostGross;
+                prepCostsNet = prepCostsGross;
+                miscellaneousCostsNet = miscellaneousCostsGross;
+
+            } else { // 'small_business'
+                // All values are Gross/Net (since no VAT is charged/reclaimed)
+                netSellingPrice = sellingPriceGross;
+                ebayFeeNet = sellingPriceGross * ebayFeeRate;
+                promotedFeeNet = sellingPriceGross * promotedListingRate;
+                // Other costs are already Gross/Net
+            }
+
+            // Sum of all 'Other Fixed Costs' Net
+            const totalOtherFixedCostsNet = prepCostsNet + miscellaneousCostsNet;
+
+            // Total Net Selling Costs (Fees + Shipping + Prep/Misc)
+            const totalNetSellingFees = ebayFeeNet + promotedFeeNet + outboundShippingCostNet + totalOtherFixedCostsNet;
+
+            // Total Investment per unit (COGS + all Net Fees)
+            const totalInvestmentPerUnit = cogs + totalNetSellingFees;
 
             // --- 3. Calculate Profit Metrics (Per Unit) ---
-            const netProfit = sellingPrice - totalInvestmentPerUnit;
 
-            // Calculate Profit Margin: (Net Profit / Selling Price) * 100
-            const profitMargin = (sellingPrice > 0) ? (netProfit / sellingPrice) * 100 : 0;
+            // Net Profit (pre-Income Tax)
+            const netProfitPreEst = netSellingPrice - totalInvestmentPerUnit;
+
+            // Calculate Profit Margin: (Net Profit / Net Selling Price) * 100
+            const profitMargin = (netSellingPrice > 0) ? (netProfitPreEst / netSellingPrice) * 100 : 0;
 
             // Calculate ROI: (Net Profit / Total Investment) * 100
-            const roi = (totalInvestmentPerUnit > 0) ? (netProfit / totalInvestmentPerUnit) * 100 : 0;
+            const roi = (totalInvestmentPerUnit > 0) ? (netProfitPreEst / totalInvestmentPerUnit) * 100 : 0;
 
-            // --- 4. Calculate Total Monthly Profit ---
-            const monthlyProfit = netProfit * unitsSold;
+            // --- 4. Calculate Total Monthly Profit and Income Tax ---
+            const monthlyProfitPreEst = netProfitPreEst * unitsSold;
+
+            // Income Tax Estimation (calculated on monthly profit)
+            const monthlyIncomeTax = monthlyProfitPreEst > 0 ? monthlyProfitPreEst * incomeTaxRate : 0;
+
+            // Final Profit (after Income Tax)
+            const monthlyProfitPostEst = monthlyProfitPreEst - monthlyIncomeTax;
+            const netProfitPostEst = netProfitPreEst * (1 - incomeTaxRate);
 
             // --- 5. Inverse Calculations for Key Metrics ---
 
-            // 5a. Calculate MAX COGS: The highest COGS allowed to hit the target profit
-            const maxCOGS = sellingPrice - totalFeesAndCostsPerUnit - targetProfit;
+            // 5a. Calculate MAX COGS: Max COGS to hit target profit (Target Profit must be achieved with Net Price)
+            const maxCOGS = netSellingPrice - totalNetSellingFees - targetProfit;
 
-            // 5b. Calculate MIN Selling Price: The lowest Selling Price needed to hit the target profit
+            // 5b. Calculate MIN Selling Price (Gross)
+            let minSellingPriceGross = 0;
+            // Target Net Revenue needed: Target + COGS + Total Net Fixed Costs
+            const targetNetRevenueNeeded = targetProfit + cogs + outboundShippingCostNet + totalOtherFixedCostsNet;
 
-            // Fixed costs not dependent on price percentage (shipping, prep, cogs)
-            const nonPercentageCosts = outboundShippingCost + totalOtherFixedCosts + cogs;
+            if (taxScheme === 'small_business' || taxScheme === 'margin_tax') {
+                // If small business or margin scheme (VAT is not percentage of Gross Price): 
+                // Min Gross Price = Target Net Revenue needed (simple flow)
+                // Note: For Margin scheme, this is oversimplified, as it doesn't account for the non-linear VAT calculation on margin
+                minSellingPriceGross = targetNetRevenueNeeded + (taxScheme === 'margin_tax' ? saleVAT : 0);
+            } else { // standard_vat
+                // Formula: S_gross = (Target Net Revenue) / (1 - eBayRate / VatFactor)
+                const totalNetFeeRate = (ebayFeeRate + promotedListingRate) / vatFactor;
 
-            let minSellingPrice = 0;
-            // The formula is: S = (Target Profit + Fixed Costs) / (1 - Total Fee Rate)
-            const totalFeeRate = ebayFeeRate + promotedListingRate;
+                // Only the price-dependent fees are considered here
+                const netFixedCosts = cogs + outboundShippingCostNet + totalOtherFixedCostsNet;
 
-            if (totalFeeRate < 1) {
-                minSellingPrice = (targetProfit + nonPercentageCosts) / (1 - totalFeeRate);
+                // Let P be the Gross Selling Price: 
+                // P_net = P / F
+                // Fee_net = P * (E + A) / F
+                // P_net - Fee_net - Fixed = Target
+                // P/F - P*(E+A)/F = Target + Fixed
+                // P * ( (1-E-A)/F ) = Target + Fixed
+                // P = (Target + Fixed) * F / (1 - E - A)
+
+                // Note: This requires all fixed costs (cogs, shipping, prep) to be fully known in their net form.
+                const priceDependentFactor = 1 - ebayFeeRate - promotedListingRate;
+
+                if (priceDependentFactor > 0) {
+                    minSellingPriceGross = (targetProfit + netFixedCosts) * vatFactor / priceDependentFactor;
+                }
             }
+
 
             // --- 6. Update UI with Results ---
 
-            // Net Profit Box Styling
-            const netProfitElement = document.getElementById('netProfit');
-            netProfitElement.textContent = formatCurrency(netProfit);
+            // Profit Boxes
+            const netProfitPreEstElement = document.getElementById('netProfitPreEst');
+            const netProfitPostEstElement = document.getElementById('netProfitPostEst');
 
-            netProfitElement.classList.remove('bg-profit-green', 'bg-loss-red', 'text-ebay-dark', 'bg-yellow-400');
-            if (netProfit >= targetProfit) {
-                netProfitElement.classList.add('bg-profit-green', 'text-ebay-dark');
-            } else if (netProfit >= 0) {
-                netProfitElement.classList.add('bg-yellow-400', 'text-ebay-dark');
+            netProfitPreEstElement.textContent = formatCurrency(netProfitPreEst);
+            netProfitPostEstElement.textContent = formatCurrency(netProfitPostEst);
+
+            // Styling logic (based on post-tax profit)
+            [netProfitPreEstElement, netProfitPostEstElement].forEach(el => {
+                el.classList.remove('bg-profit-green', 'bg-loss-red', 'text-ebay-dark', 'bg-yellow-400');
+            });
+
+            if (netProfitPostEst >= targetProfit) {
+                netProfitPreEstElement.classList.add('bg-profit-green', 'text-ebay-dark');
+                netProfitPostEstElement.classList.add('bg-profit-green', 'text-ebay-dark');
+            } else if (netProfitPostEst >= 0) {
+                netProfitPreEstElement.classList.add('bg-yellow-400', 'text-ebay-dark');
+                netProfitPostEstElement.classList.add('bg-yellow-400', 'text-ebay-dark');
             } else {
-                netProfitElement.classList.add('bg-loss-red', 'text-ebay-dark');
+                netProfitPreEstElement.classList.add('bg-loss-red', 'text-ebay-dark');
+                netProfitPostEstElement.classList.add('bg-loss-red', 'text-ebay-dark');
             }
+
 
             // Other Boxes
             document.getElementById('profitMargin').textContent = formatPercentage(profitMargin);
             document.getElementById('roi').textContent = formatPercentage(roi);
 
-            // Update Monthly Profit Box
-            document.getElementById('unitsSoldDisplay').textContent = unitsSold.toLocaleString();
-            document.getElementById('monthlyProfit').textContent = formatCurrency(monthlyProfit);
+            // Monthly Profit Boxes
+            document.getElementById('monthlyProfitPreEst').textContent = formatCurrency(monthlyProfitPreEst);
+            document.getElementById('monthlyIncomeTax').textContent = formatCurrency(monthlyIncomeTax);
+
 
             // --- 7. Update Unit Cost Breakdown Section ---
-            document.getElementById('displayEbayFee').textContent = formatCurrency(ebayFee);
-            document.getElementById('displayPromotedFee').textContent = formatCurrency(promotedFee);
-            document.getElementById('displayShippingCost').textContent = formatCurrency(outboundShippingCost);
+            document.getElementById('displayGrossSellingPrice').textContent = formatCurrency(sellingPriceGross);
+            document.getElementById('displaySaleVAT').textContent = formatCurrency(saleVAT);
+            document.getElementById('displayNetSellingPrice').textContent = formatCurrency(netSellingPrice);
+
+            document.getElementById('displayEbayFeeNet').textContent = formatCurrency(ebayFeeNet);
+            document.getElementById('displayPromotedFeeNet').textContent = formatCurrency(promotedFeeNet);
+            document.getElementById('displayShippingCostNet').textContent = formatCurrency(outboundShippingCostNet);
 
             // Other Fixed Costs Combined
-            document.getElementById('displayOtherFixedCostsCombined').textContent = formatCurrency(totalOtherFixedCosts);
+            document.getElementById('displayOtherFixedCostsCombinedNet').textContent = formatCurrency(totalOtherFixedCostsNet);
 
-            // Total Selling Fees & Costs (eBay/Shipping/Prep)
-            document.getElementById('displayTotalSellingFees').textContent = formatCurrency(totalFeesAndCostsPerUnit);
+            // Total Net Selling Fees & Costs
+            document.getElementById('displayTotalSellingFeesNet').textContent = formatCurrency(totalNetSellingFees);
 
             // COGS Line
             document.getElementById('displayCOGS').textContent = formatCurrency(cogs);
 
-            // Total Investment (Fees + COGS)
+            // Total Investment (Net Fees + COGS)
             document.getElementById('displayTotalInvestment').textContent = formatCurrency(totalInvestmentPerUnit);
 
             // --- 8. Update Labels with Inverse Metrics ---
@@ -628,8 +884,8 @@
             const langData = translations[currentLang];
 
             // Update Selling Price Label content (Min Price)
-            const formattedMinPrice = formatCurrency(minSellingPrice);
-            let minPriceColorClass = (sellingPrice >= minSellingPrice) ? 'text-profit-green' : 'text-loss-red';
+            const formattedMinPrice = formatCurrency(minSellingPriceGross);
+            let minPriceColorClass = (sellingPriceGross >= minSellingPriceGross) ? 'text-profit-green' : 'text-loss-red';
 
             minPriceValueContainer.innerHTML = `
                 (<span class="font-semibold ${minPriceColorClass}">${langData['calc_min_price_pre']} ${targetProfitText} ${langData['calc_min_price_post']} ${formattedMinPrice}</span>)
@@ -653,11 +909,11 @@
 
         // Set up the initial listener on window load
         window.onload = function () {
-            // 1. Load saved settings (values and language)
+            // 1. Load saved settings (values, language, and tax scheme)
             loadSettings();
 
             // 2. Set language (which triggers the first updateProfit)
-            // We use the language value determined by loadSettings() or the default 'en'
+            // We use the language value determined by loadSettings()
             setLanguage(currentLang);
         };
     </script>
