@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="title_app">eBay Profit Rechner (inkl. Progression)</title>
+    <title data-i18n="title_app">eBay Profit Rechner (inkl. Steuern)</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Configure Tailwind for custom theme -->
@@ -38,7 +38,7 @@
         }
 
         input[type="number"]:focus,
-        select[type="number"]:focus {
+        select:focus {
             outline: none;
             border-color: #38bdf8;
             box-shadow: 0 0 0 1px #38bdf8;
@@ -77,7 +77,7 @@
             display: none;
         }
 
-        details[open] summary::after {
+        details summary::after {
             content: '▼';
             float: right;
             transition: transform 0.2s;
@@ -117,14 +117,6 @@
             color: white;
             font-weight: bold;
         }
-
-        /* Mobile adjustment for input grid */
-        @media (max-width: 639px) {
-            .input-grid-2-cols>div {
-                grid-column: span 2 / span 2;
-                /* Make all input fields full width on mobile */
-            }
-        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -134,7 +126,7 @@
     <div class="max-w-3xl mx-auto">
         <header class="text-center mb-6">
             <h1 class="text-3xl sm:text-4xl font-extrabold text-ebay-primary" data-i18n="title_app">eBay Profit Rechner
-                (inkl. Progression)</h1>
+                (inkl. Steuern)</h1>
             <p class="text-ebay-light mt-1 text-sm sm:text-base" data-i18n="subtitle_app">Berechnung von Rentabilität,
                 Steuern und Kennzahlen für Deutschland.</p>
         </header>
@@ -201,7 +193,7 @@
                         <input type="number" id="cogs" value="5.00" min="0" step="0.01" oninput="updateProfit()"
                             class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
 
-                        <!-- COGS Input Type Selector for Standard VAT only -->
+                        <!-- NEW: COGS Input Type Selector for Standard VAT only -->
                         <div id="cogsInputTypeSelector" class="mt-2 hidden">
                             <label class="block text-xs font-medium text-gray-400 mb-1"
                                 data-i18n="label_cogs_input_type">Eingabewert COGS:</label>
@@ -248,87 +240,16 @@
                                 class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
                         </div>
 
-                        <!-- TAX YEAR -->
+                        <!-- INCOME TAX RATE -->
                         <div>
-                            <label for="taxYear" class="block text-sm font-medium text-gray-300">
-                                Steuerjahr (Basis für Freibetrag)
+                            <label for="incomeTaxRate" class="block text-sm font-medium text-gray-300"
+                                data-i18n="label_income_tax_rate">
+                                Geschätzter Einkommensteuersatz (%)
                             </label>
-                            <input type="number" id="taxYear" value="2024" min="2020" step="1" oninput="updateProfit()"
-                                class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
-                            <span class="label-indicator block mt-1">Basis: Grundfreibetrag 2024 (11.604 € -
-                                Ledig)</span>
-                        </div>
-
-                        <!-- ALREADY EARNED INCOME (ZvE) -->
-                        <div>
-                            <label for="alreadyEarnedIncome" class="block text-sm font-medium text-gray-300"
-                                data-i18n="label_already_earned_income">
-                                Bisheriges Jahres-ZvE (Zu versteuerndes Einkommen) (€)
-                            </label>
-                            <input type="number" id="alreadyEarnedIncome" value="500.00" min="0" step="100.00"
+                            <input type="number" id="incomeTaxRate" value="25.00" min="0" max="50" step="1"
                                 oninput="updateProfit()"
                                 class="mt-1 w-full p-2 rounded-lg transition-all focus:ring-1 focus:ring-accent-blue">
                         </div>
-
-                        <!-- Placeholder for removed fixed tax rate -->
-                        <div class="opacity-50 text-sm text-gray-400 self-end pb-3">
-                            <span data-i18n="label_income_tax_rate_removed">Der ESt-Satz wird nun automatisch über die
-                                Progression berechnet.</span>
-                        </div>
-
-                        <!-- ESt Calculation & Annualization Modes Group -->
-                        <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                            <!-- 1. EST CALCULATION MODE SELECTION (Marginal vs Average) -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2" data-i18n="label_est_mode">
-                                    ESt-Satz-Basis für Projektgewinn
-                                </label>
-                                <div id="estModeSelection" class="grid grid-cols-1 gap-3">
-                                    <div id="est_mode_marginal" onclick="setEstCalculationMode('marginal')"
-                                        class="tax-scheme-option p-3 rounded-lg border border-ebay-light hover:border-accent-blue selected">
-                                        <p class="font-bold text-sm" data-i18n="est_mode_marginal_title">
-                                            Marginalbesteuerung</p>
-                                        <p class="text-xs text-gray-400 mt-1" data-i18n="est_mode_marginal_desc">
-                                            Berücksichtigt den Progressionseffekt (höchster Steuersatz).</p>
-                                    </div>
-                                    <div id="est_mode_average" onclick="setEstCalculationMode('average')"
-                                        class="tax-scheme-option p-3 rounded-lg border border-ebay-light hover:border-accent-blue">
-                                        <p class="font-bold text-sm" data-i18n="est_mode_average_title">
-                                            Durchschnittsbesteuerung</p>
-                                        <p class="text-xs text-gray-400 mt-1" data-i18n="est_mode_average_desc">Wendelt
-                                            den durchschnittlichen Steuersatz auf den Gesamtgewinn an (vereinfacht).</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 2. PROJECT PROFIT ANNUALIZATION MODE SELECTION (x12 vs x1) -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2"
-                                    data-i18n="label_annualization_mode">
-                                    Projektgewinn für ZvE-Hochrechnung
-                                </label>
-                                <div id="annualizationModeSelection" class="grid grid-cols-1 gap-3">
-                                    <div id="annualization_mode_annual" onclick="setAnnualizationMode('annual')"
-                                        class="tax-scheme-option p-3 rounded-lg border border-ebay-light hover:border-accent-blue selected">
-                                        <p class="font-bold text-sm" data-i18n="annualization_mode_annual_title">
-                                            Jährliche Hochrechnung (x12)</p>
-                                        <p class="text-xs text-gray-400 mt-1"
-                                            data-i18n="annualization_mode_annual_desc">Der Monatsgewinn wird auf 12
-                                            Monate hochgerechnet (Standard & steuerlich korrekt).</p>
-                                    </div>
-                                    <div id="annualization_mode_monthly" onclick="setAnnualizationMode('monthly')"
-                                        class="tax-scheme-option p-3 rounded-lg border border-ebay-light hover:border-accent-blue">
-                                        <p class="font-bold text-sm" data-i18n="annualization_mode_monthly_title">Nur
-                                            Monatsgewinn (x1)</p>
-                                        <p class="text-xs text-gray-400 mt-1"
-                                            data-i18n="annualization_mode_monthly_desc">Die ESt wird nur basierend auf
-                                            dem Monatsgewinn berechnet (Momentaufnahme).</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- End Modes Group -->
 
                         <div>
                             <label for="ebayFeeRate" class="block text-sm font-medium text-gray-300"
@@ -407,7 +328,7 @@
 
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
 
-                    <!-- Box 1: Net Profit / Unit (Before Income Tax) -->
+                    <!-- Box 1: Net Profit (Before Income Tax) -->
                     <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-2 sm:col-span-2">
                         <p class="text-xs font-medium text-gray-300" data-i18n="box_net_profit_pre_est">Netto-Profit /
                             Einheit (vor ESt)</p>
@@ -416,7 +337,7 @@
                         </p>
                     </div>
 
-                    <!-- Box 2: Final Profit / Unit (After Income Tax) -->
+                    <!-- Box 2: Final Profit (After Income Tax) -->
                     <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-2 sm:col-span-2">
                         <p class="text-xs font-medium text-gray-300" data-i18n="box_net_profit_post_est">Endgültiger
                             Profit / Einheit (nach ESt)</p>
@@ -441,45 +362,19 @@
                         <p id="monthlyProfitPreEst"
                             class="text-xl sm:text-2xl font-bold text-profit-green mt-1 text-center py-1 sm:py-2 rounded-lg">
                         </p>
-                        <p id="monthlyProfitPreEstBasis" class="text-xs text-gray-400 mt-1 text-center"></p>
-                        <!-- Basis-Info -->
                     </div>
 
-                    <!-- Box 7: Monthly Profit (Post-Est) -->
+                    <!-- Box 5: Income Tax Deduction -->
                     <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-2 sm:col-span-2">
-                        <p class="text-xs font-medium text-gray-300" data-i18n="box_monthly_profit_post_est_title">
-                            Geschätzter Monatsgewinn (nach ESt)
-                        </p>
-                        <p id="monthlyProfitPostEstDisplay"
-                            class="text-xl sm:text-2xl font-bold mt-1 text-center py-1 sm:py-2 rounded-lg transition-colors">
-                        </p>
-                        <p id="monthlyProfitPostEstBasis" class="text-xs text-gray-400 mt-1 text-center"></p>
-                        <!-- Basis-Info -->
-                    </div>
-
-                    <!-- Box 5: Monthly Income Tax Deduction (ESt-Abzug) -->
-                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-1 sm:col-span-1">
                         <p class="text-xs font-medium text-gray-300" data-i18n="box_monthly_income_tax">
-                            ESt-Abzug
+                            Geschätzter ESt-Abzug
                         </p>
                         <p id="monthlyIncomeTax"
-                            class="text-xl sm:text-2xl font-bold mt-1 text-center py-1 sm:py-2 rounded-lg transition-colors">
-                        </p>
-                        <p id="monthlyIncomeTaxBasis" class="text-xs text-gray-400 mt-1 text-center"></p>
-                        <!-- Basis-Info -->
-                    </div>
-
-                    <!-- Box 8: Effective Marginal Tax Rate -->
-                    <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-1 sm:col-span-1">
-                        <p class="text-xs font-medium text-gray-300" data-i18n="box_marginal_tax_rate">
-                            Effektiver Steuersatz
-                        </p>
-                        <p id="marginalTaxRate"
-                            class="text-xl sm:text-2xl font-bold text-accent-blue mt-1 text-center py-1 sm:py-2 rounded-lg">
+                            class="text-xl sm:text-2xl font-bold text-loss-red mt-1 text-center py-1 sm:py-2 rounded-lg">
                         </p>
                     </div>
 
-                    <!-- Box 6: Profit Margin (Moved for better flow) -->
+                    <!-- Hidden Box 6: Profit Margin -->
                     <div class="bg-ebay-light p-3 rounded-lg shadow-lg col-span-1 sm:col-span-1">
                         <p class="text-xs font-medium text-gray-300" data-i18n="box_profit_margin">Profitmarge</p>
                         <p id="profitMargin"
@@ -487,34 +382,6 @@
                         </p>
                     </div>
                 </div>
-            </section>
-
-            <!-- NEW SECTION: CALCULATION EXPLANATION -->
-            <section class="mt-6">
-                <details class="rounded-xl bg-ebay-light p-4 shadow-inner">
-                    <summary class="text-gray-200 hover:text-accent-blue transition-colors"
-                        data-i18n="summary_monthly_calc">Wie der Monatsgewinn & die ESt berechnet wird</summary>
-                    <div class="pt-4 text-gray-300 text-sm space-y-3">
-                        <p data-i18n="calc_monthly_pre">
-                            <span class="font-bold">Monatsgewinn (vor ESt)</span>: Dies ist der Netto-Profit pro Einheit
-                            (nach Abzug aller Netto-Kosten und Steuern wie MwSt./Vorsteuer) multipliziert mit den
-                            geschätzten monatlichen Verkaufseinheiten.
-                        </p>
-                        <p data-i18n="calc_monthly_est">
-                            <span class="font-bold">ESt-Abzug</span>: Berechnet sich aus der Differenz der jährlichen
-                            Einkommensteuer zwischen (Bisheriges ZvE) und (Bisheriges ZvE + Jährlicher Projektgewinn).
-                            Es wird der **Grundtarif 2024 (Ledige)** verwendet. Die Besteuerung erfolgt zum
-                            **Grenzsteuersatz**.
-                        </p>
-                        <p data-i18n="calc_monthly_post">
-                            <span class="font-bold">Monatsgewinn (nach ESt)</span>: Dieser Wert wird berechnet, indem
-                            vom Monatsgewinn (vor ESt) der geschätzte Einkommensteuer-Abzug abgezogen wird.
-                            <span class="italic text-gray-400 block mt-1">(Monatsgewinn vor ESt - monatlicher
-                                ESt-Abzug).</span>
-                            Bitte beachten Sie, dass dies eine Vereinfachung ist.
-                        </p>
-                    </div>
-                </details>
             </section>
 
             <hr class="border-ebay-light">
@@ -595,7 +462,7 @@
         // --- TRANSLATION DATA ---
         const translations = {
             de: {
-                title_app: "eBay Profit Rechner (inkl. Progression)",
+                title_app: "eBay Profit Rechner (inkl. Steuern)",
                 subtitle_app: "Berechnung von Rentabilität, Steuern und Kennzahlen für Deutschland.",
                 h2_tax_scheme: "Steuerliches Szenario wählen",
                 scheme_small_business_title: "Kleinunternehmer",
@@ -607,32 +474,13 @@
                 h2_primary_inputs: "Primäre Finanzielle Eingaben",
                 label_selling_price: "Verkaufspreis Brutto (€)",
                 label_cogs: "Kosten der Waren (Einkaufspreis) (€)",
-                label_cogs_input_type: "Eingabewert COGS:",
-                cogs_input_gross: "Brutto",
-                cogs_input_net: "Netto",
+                label_cogs_input_type: "Eingabewert COGS:", // NEU
+                cogs_input_gross: "Brutto", // NEU
+                cogs_input_net: "Netto", // NEU
                 label_cogs_vat_amount: "Davon Vorsteuer (erstattungsfähig):",
                 summary_details: "Detaillierte Kosten & Steuerparameter",
                 label_target_profit: "Ziel-Nettogewinn (vor ESt) (€)",
-                label_already_earned_income: "Bisheriges Jahres-ZvE (Zu versteuerndes Einkommen) (€)",
-                label_income_tax_rate_removed: "Der ESt-Satz wird nun automatisch über die Progression berechnet.",
-                // ESt Mode
-                label_est_mode: "ESt-Satz-Basis für Projektgewinn",
-                est_mode_marginal_title: "Marginalbesteuerung",
-                est_mode_marginal_desc: "Berücksichtigt den Progressionseffekt (höchster Steuersatz).",
-                est_mode_average_title: "Durchschnittsbesteuerung",
-                est_mode_average_desc: "Wendelt den durchschnittlichen Steuersatz auf den Gesamtgewinn an (vereinfacht).",
-                // Annualization Mode (NEW)
-                label_annualization_mode: "Projektgewinn für ZvE-Hochrechnung",
-                annualization_mode_annual_title: "Jährliche Hochrechnung (x12)",
-                annualization_mode_annual_desc: "Der Monatsgewinn wird auf 12 Monate hochgerechnet (Standard & steuerlich korrekt).",
-                annualization_mode_monthly_title: "Nur Monatsgewinn (x1)",
-                annualization_mode_monthly_desc: "Die ESt wird nur basierend auf dem Monatsgewinn berechnet (Momentaufnahme).",
-                // ESt Basis Keys
-                calc_est_marginal_annual_basis: "Basis: Jährl. Gewinn x12, Grenzsteuersatz (Progression).",
-                calc_est_marginal_monthly_basis: "Basis: Monatsgewinn x1, Grenzsteuersatz (Momentaufnahme).",
-                calc_est_average_annual_basis: "Basis: Jährl. Gewinn x12, Durchschnittssteuersatz (vereinfacht).",
-                calc_est_average_monthly_basis: "Basis: Monatsgewinn x1, Durchschnittssteuersatz (vereinfacht).",
-
+                label_income_tax_rate: "Geschätzter Einkommensteuersatz (%)",
                 label_ebay_fee_rate: "Gesamt-eBay-Gebührensatz (%)",
                 label_shipping_cost: "Versandkosten Brutto, bezahlt vom Verkäufer (€)",
                 label_promoted_rate: "Promoted Listing Rate (Ad Spend) (%)",
@@ -645,13 +493,7 @@
                 box_profit_margin: "Profitmarge",
                 box_roi: "ROI",
                 box_monthly_profit_pre_est_title: "Geschätzter Monatsgewinn (vor ESt)",
-                box_monthly_profit_post_est_title: "Geschätzter Monatsgewinn (nach ESt)",
-                box_monthly_income_tax: "ESt-Abzug",
-                box_marginal_tax_rate: "Effektiver Steuersatz",
-                summary_monthly_calc: "Wie der Monatsgewinn & die ESt berechnet wird",
-                calc_monthly_pre: "<span class='font-bold'>Monatsgewinn (vor ESt)</span>: Dies ist der Netto-Profit pro Einheit (nach Abzug aller Netto-Kosten und Steuern wie MwSt./Vorsteuer) multipliziert mit den geschätzten monatlichen Verkaufseinheiten.",
-                calc_monthly_est: "<span class='font-bold'>ESt-Abzug</span>: Berechnet sich aus der Differenz der jährlichen Einkommensteuer zwischen (Bisheriges ZvE) und (Bisheriges ZvE + Jährlicher Projektgewinn). Es wird der **Grundtarif 2024 (Ledige)** verwendet. Die Besteuerung erfolgt zum **Grenzsteuersatz**.",
-                calc_monthly_post: "<span class='font-bold'>Monatsgewinn (nach ESt)</span>: Dieser Wert wird berechnet, indem vom Monatsgewinn (vor ESt) der geschätzte Einkommensteuer-Abzug abgezogen wird. <span class='italic text-gray-400 block mt-1'>(Monatsgewinn vor ESt - monatlicher ESt-Abzug).</span> Bitte beachten Sie, dass dies eine Vereinfachung ist.",
+                box_monthly_income_tax: "Geschätzter ESt-Abzug",
                 h2_breakdown: "Stückkosten-Aufschlüsselung (Netto-Basis)",
                 breakdown_gross_selling_price: "Brutto-Verkaufspreis:",
                 breakdown_sale_vat: "Abzuführende MwSt. (Umsatzsteuer):",
@@ -667,22 +509,19 @@
                 calc_min_price_post: "Profit:",
                 calc_max_cogs_pre: "Max. COGS für",
                 calc_max_cogs_post: "Profit:",
-                basis_units_sold_pre: "Basiert auf",
-                basis_units_sold_post: "Einheiten/Monat",
                 lang_en: "English",
                 lang_de: "Deutsch",
                 currency_symbol: "€",
-                mwst_rate: 0.19,
-                vat_factor: 1.19,
+                mwst_rate: 0.19, // German VAT rate
+                vat_factor: 1.19, // 1 + VAT rate
+                // NEUE HINWEISE für COGS
                 hint_cogs_small_business: "Bitte den Einkaufspreis **BRUTTO** eingeben. Es kann keine Vorsteuer abgezogen werden (Kleinunternehmerregelung).",
-                hint_cogs_standard_vat_gross: "Sie haben **BRUTTO** gewählt. Bitte den Einkaufspreis inklusive 19% MwSt. eingeben. Die Vorsteuer wird automatisch abgezogen.",
-                hint_cogs_standard_vat_net: "Sie haben **NETTO** gewählt. Bitte den Einkaufspreis ohne MwSt. eingeben. Die Vorsteuer wird automatisch berechnet.",
-                hint_cogs_margin_tax: "Bitte den Einkaufspreis **BRUTTO** eingeben. Beim Einkauf von Privat kann keine Vorsteuer abgezogen werden (Differenzbesteuerung).",
-                info_no_inc_tax: "Keine ESt fällig",
-                info_tax_free_zone: "Gesamt-ZvE liegt unter dem Grundfreibetrag (€11.604, 2024).",
+                hint_cogs_standard_vat_gross: "Sie haben **BRUTTO** gewählt. Bitte den Einkaufspreis inklusive 19% MwSt. eingeben. Die Vorsteuer wird automatisch abgezogen.", // NEU
+                hint_cogs_standard_vat_net: "Sie haben **NETTO** gewählt. Bitte den Einkaufspreis ohne MwSt. eingeben. Die Vorsteuer wird automatisch berechnet.", // NEU
+                hint_cogs_margin_tax: "Bitte den Einkaufspreis **BRUTTO** eingeben. Beim Einkauf von Privat kann keine Vorsteuer abgezogen werden (Differenzbesteuerung)."
             },
             en: {
-                title_app: "eBay Profit Analyzer (Incl. Progression)",
+                title_app: "eBay Profit Analyzer (Incl. Taxes)",
                 subtitle_app: "Calculate eBay profitability and key metrics including German taxes.",
                 h2_tax_scheme: "Select Tax Scheme",
                 scheme_small_business_title: "Small Business Owner",
@@ -694,32 +533,13 @@
                 h2_primary_inputs: "Primary Financial Inputs",
                 label_selling_price: "Selling Price Gross (€)",
                 label_cogs: "Cost of Goods Sold (Purchase Price) (€)",
-                label_cogs_input_type: "COGS Input Value:",
-                cogs_input_gross: "Gross",
-                cogs_input_net: "Net",
+                label_cogs_input_type: "COGS Input Value:", // NEW
+                cogs_input_gross: "Gross", // NEW
+                cogs_input_net: "Net", // NEW
                 label_cogs_vat_amount: "Thereof Input VAT (Reclaimable):",
                 summary_details: "Detailed Costs & Tax Parameters",
                 label_target_profit: "Target Net Profit (pre-Inc. Tax) (€)",
-                label_already_earned_income: "Previous Annual Taxable Income (ZvE) (€)",
-                label_income_tax_rate_removed: "The Inc. Tax Rate is now calculated automatically via progression.",
-                // ESt Mode
-                label_est_mode: "Inc. Tax Rate Basis for Project Profit",
-                est_mode_marginal_title: "Marginal Taxation",
-                est_mode_marginal_desc: "Accounts for the progression effect (highest tax bracket).",
-                est_mode_average_title: "Average Taxation",
-                est_mode_average_desc: "Applies the average tax rate to the total profit (simplified).",
-                // Annualization Mode (NEW)
-                label_annualization_mode: "Project Profit Annualization for ZvE",
-                annualization_mode_annual_title: "Annual Projection (x12)",
-                annualization_mode_annual_desc: "Monthly profit is projected over 12 months for Inc. Tax calculation (Standard & correct).",
-                annualization_mode_monthly_title: "Monthly Profit Only (x1)",
-                annualization_mode_monthly_desc: "Inc. Tax is calculated based only on the monthly profit (Snapshot).",
-                // ESt Basis Keys
-                calc_est_marginal_annual_basis: "Basis: Annual Profit x12, Marginal Tax Rate (Progression).",
-                calc_est_marginal_monthly_basis: "Basis: Monthly Profit x1, Marginal Tax Rate (Snapshot).",
-                calc_est_average_annual_basis: "Basis: Annual Profit x12, Average Tax Rate (Simplified).",
-                calc_est_average_monthly_basis: "Basis: Monthly Profit x1, Average Tax Rate (Simplified).",
-
+                label_income_tax_rate: "Estimated Income Tax Rate (%)",
                 label_ebay_fee_rate: "Total eBay Fee Rate (%)",
                 label_shipping_cost: "Outbound Shipping Cost Gross (€)",
                 label_promoted_rate: "Promoted Listing Rate (Ad Spend) (%)",
@@ -732,13 +552,7 @@
                 box_profit_margin: "Profit Margin",
                 box_roi: "ROI",
                 box_monthly_profit_pre_est_title: "Estimated Monthly Profit (pre-Inc. Tax)",
-                box_monthly_profit_post_est_title: "Estimated Monthly Profit (post-Inc. Tax)",
-                box_monthly_income_tax: "Inc. Tax Deduction",
-                box_marginal_tax_rate: "Effective Tax Rate",
-                summary_monthly_calc: "How Monthly Profit & Inc. Tax is Calculated",
-                calc_monthly_pre: "<span class='font-bold'>Monthly Profit (pre-Inc. Tax)</span>: This is the Net Profit per unit (after deducting all net costs and taxes like VAT/Input Tax) multiplied by the estimated monthly units sold.",
-                calc_monthly_est: "<span class='font-bold'>Inc. Tax Deduction</span>: Calculated as the difference in annual income tax between (Previous ZvE) and (Previous ZvE + Annual Project Profit). The **Basic Tax Table 2024 (Single Filer)** is used. Taxation is applied at the **Marginal Tax Rate**.",
-                calc_monthly_post: "<span class='font-bold'>Monthly Profit (post-Inc. Tax)</span>: This value is calculated by subtracting the estimated income tax deduction from the Monthly Profit (pre-Inc. Tax). <span class='italic text-gray-400 block mt-1'>(Monthly Profit pre-Inc. Tax - Monthly Inc. Tax Deduction).</span> Please note this is a simplification.",
+                box_monthly_income_tax: "Estimated Inc. Tax Deduction",
                 h2_breakdown: "Unit Cost Breakdown (Net Basis)",
                 breakdown_gross_selling_price: "Gross Selling Price:",
                 breakdown_sale_vat: "VAT to be remitted (Sales Tax):",
@@ -754,74 +568,22 @@
                 calc_min_price_post: "Profit:",
                 calc_max_cogs_pre: "Max. COGS for",
                 calc_max_cogs_post: "Profit:",
-                basis_units_sold_pre: "Based on",
-                basis_units_sold_post: "units/month",
                 lang_en: "English",
                 lang_de: "German",
                 currency_symbol: "€",
                 mwst_rate: 0.19,
                 vat_factor: 1.19,
+                // NEW HINTS for COGS
                 hint_cogs_small_business: "Please enter the purchase price **GROSS**. No input VAT can be reclaimed (Small Business Exemption).",
-                hint_cogs_standard_vat_gross: "You selected **GROSS**. Please enter the purchase price including 19% VAT. Input VAT will be automatically deducted.",
-                hint_cogs_standard_vat_net: "You selected **NET**. Please enter the purchase price Excl. VAT. Input VAT will be automatically calculated.",
-                hint_cogs_margin_tax: "Please enter the purchase price **GROSS**. Input VAT cannot be reclaimed in this scheme (purchased from private seller).",
-                info_no_inc_tax: "No Inc. Tax Due",
-                info_tax_free_zone: "Total ZvE is below the tax-free allowance (€11,604, 2024).",
+                hint_cogs_standard_vat_gross: "You selected **GROSS**. Please enter the purchase price including 19% VAT. Input VAT will be automatically deducted.", // NEW
+                hint_cogs_standard_vat_net: "You selected **NET**. Please enter the purchase price Excl. VAT. Input VAT will be automatically calculated.", // NEW
+                hint_cogs_margin_tax: "Please enter the purchase price **GROSS**. Input VAT cannot be reclaimed in this scheme (purchased from private seller)."
             }
         };
 
-        let currentLang = 'de';
-        let currentTaxScheme = 'small_business';
-        let cogsInputType = 'net';
-        let estCalculationMode = 'marginal';
-        let annualizationMode = 'annual'; // NEW: Default to annual projection (x12)
-
-        // --- GERMAN INCOME TAX CALCULATION (Grundtarif 2024 - Simplified for single filer) ---
-
-        /**
-         * Calculates the annual German income tax (ESt) for a single filer (Grundtarif) based on 2024 tax data.
-         * Note: This is a simplification. It ignores church tax, solidarity surcharge (Soli), and health/social insurance.
-         * * @param {number} zve - Taxable Income (Zu versteuerndes Einkommen) in Euros.
-         * @returns {number} The calculated annual income tax (ESt) in Euros.
-         */
-        function calculateIncomeTax(zve) {
-            zve = Math.floor(zve); // Taxation is based on full Euros
-
-            // 2024 Tax Brackets (Grundtarif)
-            const LIMIT_1 = 11604; // Zone 1 end (Grundfreibetrag)
-            const LIMIT_2 = 17005; // Zone 2 end (Low progression)
-            const LIMIT_3 = 66760; // Zone 3 end (Mid progression)
-            const LIMIT_4 = 277825; // Zone 4 end (Flat 42%)
-
-            let tax = 0;
-
-            if (zve <= LIMIT_1) {
-                // Zone 1: Tax-Free
-                tax = 0;
-
-            } else if (zve <= LIMIT_2) {
-                // Zone 2: 14% to ~24% progression
-                const Y = (zve - LIMIT_1) / 10000;
-                tax = (979.18 * Y + 1400) * Y;
-
-            } else if (zve <= LIMIT_3) {
-                // Zone 3: ~24% to 42% progression
-                const Z = (zve - LIMIT_2) / 10000;
-                tax = (192.59 * Z + 2397) * Z + 960.94;
-
-            } else if (zve <= LIMIT_4) {
-                // Zone 4: Flat 42%
-                tax = 0.42 * zve - 10751.49;
-
-            } else {
-                // Zone 5: Flat 45% (Reichensteuer)
-                tax = 0.45 * zve - 19045.73;
-            }
-
-            return Math.max(0, tax); // Tax can't be negative
-        }
-
-        // --- CORE LOGIC FUNCTIONS ---
+        let currentLang = 'de'; // Default to German for this context
+        let currentTaxScheme = 'small_business'; // Default to Kleinunternehmer
+        let cogsInputType = 'net'; // Default COGS input type for Standard VAT
 
         /**
          * Sets the COGS input type (Gross/Net) for the Standard VAT scheme.
@@ -846,56 +608,13 @@
         }
 
         /**
-         * Sets the ESt calculation mode (Marginal/Average).
-         * @param {string} mode - 'marginal' or 'average'.
-         * @param {boolean} shouldSave - Whether to save the new mode to localStorage. Default is true.
-         */
-        function setEstCalculationMode(mode, shouldSave = true) {
-            if (mode !== 'marginal' && mode !== 'average') return;
-            estCalculationMode = mode;
-
-            // Update UI selection
-            document.querySelectorAll('#estModeSelection .tax-scheme-option').forEach(el => {
-                el.classList.remove('selected');
-            });
-            document.getElementById(`est_mode_${mode}`).classList.add('selected');
-
-            if (shouldSave) {
-                localStorage.setItem('ebayCalc_estCalculationMode', mode);
-            }
-            updateProfit(shouldSave);
-        }
-
-        /**
-         * NEW: Sets the annualization mode (Annual/Monthly).
-         * @param {string} mode - 'annual' or 'monthly'.
-         * @param {boolean} shouldSave - Whether to save the new mode to localStorage. Default is true.
-         */
-        function setAnnualizationMode(mode, shouldSave = true) {
-            if (mode !== 'annual' && mode !== 'monthly') return;
-            annualizationMode = mode;
-
-            // Update UI selection
-            document.querySelectorAll('#annualizationModeSelection .tax-scheme-option').forEach(el => {
-                el.classList.remove('selected');
-            });
-            document.getElementById(`annualization_mode_${mode}`).classList.add('selected');
-
-            if (shouldSave) {
-                localStorage.setItem('ebayCalc_annualizationMode', mode);
-            }
-            updateProfit(shouldSave);
-        }
-
-
-        /**
          * Saves all relevant input values and the tax scheme/language to the browser's local storage.
          */
         function saveSettings() {
             const inputs = [
                 'sellingPrice', 'cogs', 'targetProfit', 'ebayFeeRate',
                 'outboundShippingCost', 'promotedListingRate', 'prepCosts',
-                'miscellaneousCosts', 'unitsSold', 'alreadyEarnedIncome', 'taxYear'
+                'miscellaneousCosts', 'unitsSold', 'incomeTaxRate'
             ];
 
             inputs.forEach(id => {
@@ -904,9 +623,7 @@
             });
             localStorage.setItem('ebayCalc_language', currentLang);
             localStorage.setItem('ebayCalc_taxScheme', currentTaxScheme);
-            localStorage.setItem('ebayCalc_cogsInputType', cogsInputType);
-            localStorage.setItem('ebayCalc_estCalculationMode', estCalculationMode);
-            localStorage.setItem('ebayCalc_annualizationMode', annualizationMode); // NEW
+            localStorage.setItem('ebayCalc_cogsInputType', cogsInputType); // Save new state
         }
 
         /**
@@ -916,12 +633,11 @@
             const inputs = [
                 'sellingPrice', 'cogs', 'targetProfit', 'ebayFeeRate',
                 'outboundShippingCost', 'promotedListingRate', 'prepCosts',
-                'miscellaneousCosts', 'unitsSold', 'alreadyEarnedIncome', 'taxYear'
+                'miscellaneousCosts', 'unitsSold', 'incomeTaxRate'
             ];
 
             inputs.forEach(id => {
                 const savedValue = localStorage.getItem(`ebayCalc_${id}`);
-                // Only load if saved value exists, otherwise keep the default
                 if (savedValue !== null) {
                     document.getElementById(id).value = savedValue;
                 }
@@ -930,15 +646,11 @@
             const savedLang = localStorage.getItem('ebayCalc_language') || 'de';
             const savedScheme = localStorage.getItem('ebayCalc_taxScheme') || 'small_business';
             const savedCogsType = localStorage.getItem('ebayCalc_cogsInputType') || 'net';
-            const savedEstMode = localStorage.getItem('ebayCalc_estCalculationMode') || 'marginal';
-            const savedAnnualizationMode = localStorage.getItem('ebayCalc_annualizationMode') || 'annual'; // NEW
 
             // Set global variables
             currentLang = savedLang;
             currentTaxScheme = savedScheme;
-            cogsInputType = savedCogsType;
-            estCalculationMode = savedEstMode;
-            annualizationMode = savedAnnualizationMode; // NEW
+            cogsInputType = savedCogsType; // Load COGS input type
 
             // Update selectors
             document.getElementById('languageSelector').value = savedLang;
@@ -946,8 +658,6 @@
             // Set input type and tax scheme. setTaxScheme will call updateProfit
             setCogsInputType(savedCogsType, false);
             setTaxScheme(savedScheme, false);
-            setEstCalculationMode(savedEstMode, false);
-            setAnnualizationMode(savedAnnualizationMode, false); // NEW
         }
 
         /**
@@ -959,7 +669,7 @@
             currentTaxScheme = scheme;
 
             // Update UI selection
-            document.querySelectorAll('#taxSchemeSelection .tax-scheme-option').forEach(el => {
+            document.querySelectorAll('.tax-scheme-option').forEach(el => {
                 el.classList.remove('selected');
             });
             document.getElementById(`scheme_${scheme}`).classList.add('selected');
@@ -994,12 +704,7 @@
             document.querySelectorAll('[data-i18n]').forEach(element => {
                 const key = element.getAttribute('data-i18n');
                 if (langData[key]) {
-                    // Check if content needs to be set as innerHTML (for bold/italic tags in the calculation explanation)
-                    if (key.startsWith('calc_')) {
-                        element.innerHTML = langData[key];
-                    } else {
-                        element.textContent = langData[key];
-                    }
+                    element.textContent = langData[key];
                 }
             });
 
@@ -1009,7 +714,10 @@
             // 4. Ensure the correct option in the selector is selected
             document.getElementById('languageSelector').value = lang;
 
-            // 5. Re-run profit calculation to update currency displays and hints
+            // 5. Update the input label currency symbols 
+            // Note: This is mostly covered by the data-i18n updates above, but ensuring consistency.
+
+            // 6. Re-run profit calculation to update currency displays and hints
             updateProfit(false);
         }
 
@@ -1063,23 +771,21 @@
 
             const unitsSold = parseInt(document.getElementById('unitsSold').value) || 0;
             const targetProfit = parseFloat(document.getElementById('targetProfit').value) || 0;
-            const alreadyEarnedIncome = parseFloat(document.getElementById('alreadyEarnedIncome').value) || 0;
-
+            const incomeTaxRate = parseFloat(document.getElementById('incomeTaxRate').value) / 100 || 0;
 
             const vatFactor = getVatFactor(); // 1.19
             const taxScheme = currentTaxScheme;
-            const langData = translations[currentLang];
 
             let saleVAT = 0;
-            let netSellingPrice = sellingPriceGross;
+            let netSellingPrice = sellingPriceGross; // Default for small_business
             let ebayFeeNet = 0;
             let promotedFeeNet = 0;
             let outboundShippingCostNet = outboundShippingCostGross;
             let prepCostsNet = prepCostsGross;
             let miscellaneousCostsNet = miscellaneousCostsGross;
 
-            let cogsFinalNetExpense = cogs;
-            let cogsVAT = 0;
+            let cogsFinalNetExpense = cogs; // The net expense used for profit calculation
+            let cogsVAT = 0; // Vorsteuer amount
 
             // --- 2. Calculate VAT and Net Costs based on Tax Scheme ---
 
@@ -1099,11 +805,12 @@
                 prepCostsNet = prepCostsGross / vatFactor;
                 miscellaneousCostsNet = miscellaneousCostsGross / vatFactor;
 
-                // C) COGS VAT (Vorsteuer) and COGS Net calculation based on COGS Input Type
+                // C) COGS VAT (Vorsteuer) and COGS Net calculation based on COGS Input Type (NEW LOGIC)
                 if (cogsInputType === 'gross') {
+                    // User entered Gross COGS. cogs is the gross value.
                     cogsFinalNetExpense = cogs / vatFactor;
                     cogsVAT = cogs - cogsFinalNetExpense;
-                } else { // 'net' - User entered Net COGS.
+                } else { // 'net' - User entered Net COGS. cogs is the net value.
                     cogsFinalNetExpense = cogs;
                     cogsVAT = cogs * (vatFactor - 1);
                 }
@@ -1165,71 +872,19 @@
             // Calculate ROI: (Net Profit / Total Investment) * 100
             const roi = (totalInvestmentPerUnit > 0) ? (netProfitPreEst / totalInvestmentPerUnit) * 100 : 0;
 
-            // --- 4. Calculate Total Monthly Profit and Income Tax (PROGRESSION LOGIC) ---
-
+            // --- 4. Calculate Total Monthly Profit and Income Tax ---
             const monthlyProfitPreEst = netProfitPreEst * unitsSold;
 
-            let annualProjectProfit;
-            let annualizationBasisSegment;
-
-            // NEW LOGIC: Apply annualization factor (x12 or x1)
-            if (annualizationMode === 'monthly') {
-                annualProjectProfit = monthlyProfitPreEst;
-                annualizationBasisSegment = 'monthly';
-            } else { // 'annual'
-                annualProjectProfit = monthlyProfitPreEst * 12;
-                annualizationBasisSegment = 'annual';
-            }
-
-            // Annual ZvE WITHOUT the project
-            const zveBase = alreadyEarnedIncome;
-            // Annual ZvE WITH the project
-            const zveTotal = alreadyEarnedIncome + annualProjectProfit;
-
-            // Calculate Annual Tax for both scenarios
-            const annualTaxBase = calculateIncomeTax(zveBase);
-            const annualTaxTotal = calculateIncomeTax(zveTotal);
-
-            // --- Marginal Tax Calculation (The tax increase caused *only* by the project) ---
-            const annualTaxIncreaseMarginal = annualTaxTotal - annualTaxBase;
-
-            // --- Average Tax Calculation (Simplification) ---
-            const totalAnnualTax = annualTaxTotal;
-            const averageTaxRate = zveTotal > 0 ? totalAnnualTax / zveTotal : 0;
-            const annualTaxIncreaseAverage = annualProjectProfit * averageTaxRate;
-
-            let annualTaxIncrease;
-            let marginalTaxRate;
-            let taxBasisExplanationKey;
-
-            if (estCalculationMode === 'average') {
-                // Use Average Taxation
-                annualTaxIncrease = annualTaxIncreaseAverage;
-
-                // The displayed 'Marginal Tax Rate' is actually the average rate in this mode
-                marginalTaxRate = averageTaxRate * 100;
-                taxBasisExplanationKey = `calc_est_average_${annualizationBasisSegment}_basis`;
-
-            } else { // 'marginal' - Default/Accurate Mode
-                // Use Marginal Taxation
-                annualTaxIncrease = annualTaxIncreaseMarginal;
-
-                // Effective Marginal Tax Rate for the project
-                marginalTaxRate = annualProjectProfit > 0 ? (annualTaxIncrease / annualProjectProfit) * 100 : 0;
-                taxBasisExplanationKey = `calc_est_marginal_${annualizationBasisSegment}_basis`;
-            }
-
-            // Monthly Income Tax Deduction (Divide the annual tax increase by 12, even if we only used x1 for calculation)
-            // This normalizes the tax deduction back to a monthly basis for UI consistency.
-            const monthlyIncomeTax = annualTaxIncrease / 12;
+            // Income Tax Estimation (calculated on monthly profit)
+            const monthlyIncomeTax = monthlyProfitPreEst > 0 ? monthlyProfitPreEst * incomeTaxRate : 0;
 
             // Final Profit (after Income Tax)
-            const monthlyProfitPostEstValue = monthlyProfitPreEst - monthlyIncomeTax;
-            const netProfitPostEst = netProfitPreEst - (monthlyIncomeTax / unitsSold); // Calculate unit profit based on monthly tax deduction
+            const monthlyProfitPostEst = monthlyProfitPreEst - monthlyIncomeTax;
+            const netProfitPostEst = netProfitPreEst * (1 - incomeTaxRate);
 
-            // --- 5. Inverse Calculations for Key Metrics (Unchanged) ---
+            // --- 5. Inverse Calculations for Key Metrics ---
 
-            // 5a. Calculate MAX COGS
+            // 5a. Calculate MAX COGS (This result is the max allowable NET expense for COGS)
             const maxCOGSNetExpense = netSellingPrice - totalNetSellingFees - targetProfit;
 
             // Convert maxCOGSNetExpense back to the user's input type for display if Standard VAT is used
@@ -1238,25 +893,40 @@
                 maxCogsDisplayValue = maxCOGSNetExpense * vatFactor;
             }
 
-            // 5b. Calculate MIN Selling Price (Gross) - Simplified inverse calculation as progression is too complex to reverse
+            // 5b. Calculate MIN Selling Price (Gross)
             let minSellingPriceGross = 0;
+            const targetNetRevenueNeeded = targetProfit + cogsFinalNetExpense + totalNetSellingFees;
+
+            // Inverse calculation of min price is complex due to fee dependency on gross price. 
+            // We'll simplify the calculation for min price based on target NET revenue needed.
+
+            // The fees calculation itself depends on the gross selling price.
+            // Let F_rate be (ebayFeeRate + promotedListingRate)
+            // Net Revenue = Gross Price / VatFactor - (Gross Price * F_rate / VatFactor)
+            // Required Net Revenue = Target Profit + COGS_Net + Shipping_Net + Other_Net
+            // TargetNetRevenueNeeded = Gross Price / VatFactor * (1 - F_rate) + FixedCosts_Net (from shipping/prep)
+
             const totalFeesRate = ebayFeeRate + promotedListingRate;
 
-            // Assume the target profit has an effective tax rate of 25% for Min Price calculation (for simplicity)
-            const assumedPostTaxFactor = 1 - (marginalTaxRate / 100);
-            const targetNetRevenueNeeded = (targetProfit / assumedPostTaxFactor) + cogsFinalNetExpense + totalNetSellingFees;
-
             if (taxScheme === 'standard_vat') {
+                const fixedCostsNet = cogsFinalNetExpense + outboundShippingCostNet + totalOtherFixedCostsNet;
+                // TargetNetProfit = NetSellingPrice * (1 - F_rate) - FixedCosts_Net
+                // TargetNetRevenue = TargetNetProfit + FixedCosts_Net
+                // Gross Price * (1 / vatFactor) * (1 - F_rate) = TargetNetRevenueNeeded
+                // Gross Price = TargetNetRevenueNeeded * vatFactor / (1 - F_rate)
                 const priceDependentFactor = 1 - totalFeesRate;
 
                 if (priceDependentFactor > 0) {
-                    minSellingPriceGross = (targetNetRevenueNeeded) * vatFactor / priceDependentFactor;
+                    minSellingPriceGross = (targetProfit + totalInvestmentPerUnit - totalNetSellingFees) * vatFactor / priceDependentFactor;
                 } else {
-                    minSellingPriceGross = Infinity;
+                    minSellingPriceGross = Infinity; // Should not happen with typical rates
                 }
             } else if (taxScheme === 'margin_tax') {
+                // Margin Scheme is too complex for inverse price calculation here (requires a loop). 
+                // We'll use a simpler, though less accurate, assumption for display purposes:
                 minSellingPriceGross = targetNetRevenueNeeded * 1.05; // Heuristic
             } else { // small_business
+                // Target Net Revenue = Gross Price * (1 - F_rate)
                 const priceDependentFactor = 1 - totalFeesRate;
                 if (priceDependentFactor > 0) {
                     minSellingPriceGross = targetNetRevenueNeeded / priceDependentFactor;
@@ -1270,7 +940,7 @@
 
             // --- 6. Update UI with Results ---
 
-            // Profit Boxes (Per Unit)
+            // Profit Boxes
             const netProfitPreEstElement = document.getElementById('netProfitPreEst');
             const netProfitPostEstElement = document.getElementById('netProfitPostEst');
 
@@ -1293,65 +963,17 @@
                 netProfitPostEstElement.classList.add('bg-loss-red', 'text-ebay-dark');
             }
 
+
             // Other Boxes
             document.getElementById('profitMargin').textContent = formatPercentage(profitMargin);
             document.getElementById('roi').textContent = formatPercentage(roi);
 
-            // Monthly Profit Boxes (Total)
+            // Monthly Profit Boxes
             document.getElementById('monthlyProfitPreEst').textContent = formatCurrency(monthlyProfitPreEst);
+            document.getElementById('monthlyIncomeTax').textContent = formatCurrency(monthlyIncomeTax);
 
-            // Update Basis Info for Monthly Profit Pre-Est/Post-Est
-            const unitsBasisText = `${langData['basis_units_sold_pre']} ${unitsSold} ${langData['basis_units_sold_post']}`;
-            document.getElementById('monthlyProfitPreEstBasis').textContent = unitsBasisText;
-            document.getElementById('monthlyProfitPostEstBasis').textContent = unitsBasisText;
 
-            const monthlyIncomeTaxElement = document.getElementById('monthlyIncomeTax');
-            const monthlyProfitPostEstDisplayElement = document.getElementById('monthlyProfitPostEstDisplay');
-            const marginalTaxRateElement = document.getElementById('marginalTaxRate');
-
-            // --- Handling the ZERO Tax Case (Total ZvE is still within Grundfreibetrag) ---
-            if (annualTaxIncrease <= 0.01) {
-
-                monthlyIncomeTaxElement.textContent = langData['info_no_inc_tax'];
-                monthlyIncomeTaxElement.classList.remove('text-loss-red');
-                monthlyIncomeTaxElement.classList.add('text-profit-green');
-
-                // Show pre-est profit as post-est profit
-                monthlyProfitPostEstDisplayElement.textContent = formatCurrency(monthlyProfitPreEst);
-                monthlyProfitPostEstDisplayElement.classList.remove('text-loss-red', 'text-yellow-400');
-                monthlyProfitPostEstDisplayElement.classList.add('text-profit-green');
-
-                // Set basis text to explain why
-                document.getElementById('monthlyIncomeTaxBasis').textContent = langData['info_tax_free_zone'];
-
-                // Display 0% for marginal rate
-                marginalTaxRateElement.textContent = formatPercentage(0);
-
-            } else {
-                // Standard tax calculation output
-                monthlyIncomeTaxElement.textContent = formatCurrency(monthlyIncomeTax);
-                monthlyIncomeTaxElement.classList.remove('text-profit-green');
-                monthlyIncomeTaxElement.classList.add('text-loss-red');
-
-                monthlyProfitPostEstDisplayElement.textContent = formatCurrency(monthlyProfitPostEstValue);
-
-                // Styling logic for monthly post-tax
-                monthlyProfitPostEstDisplayElement.classList.remove('text-profit-green', 'text-loss-red', 'text-yellow-400');
-                if (monthlyProfitPostEstValue >= targetProfit * unitsSold) {
-                    monthlyProfitPostEstDisplayElement.classList.add('text-profit-green');
-                } else if (monthlyProfitPostEstValue >= 0) {
-                    monthlyProfitPostEstDisplayElement.classList.add('text-yellow-400');
-                } else {
-                    monthlyProfitPostEstDisplayElement.classList.add('text-loss-red');
-                }
-
-                marginalTaxRateElement.textContent = formatPercentage(marginalTaxRate);
-
-                // Set the specific ESt calculation mode basis text
-                document.getElementById('monthlyIncomeTaxBasis').textContent = langData[taxBasisExplanationKey];
-            }
-
-            // --- 7. Update Unit Cost Breakdown Section (Unchanged) ---
+            // --- 7. Update Unit Cost Breakdown Section ---
             document.getElementById('displayGrossSellingPrice').textContent = formatCurrency(sellingPriceGross);
             document.getElementById('displaySaleVAT').textContent = formatCurrency(saleVAT);
             document.getElementById('displayNetSellingPrice').textContent = formatCurrency(netSellingPrice);
@@ -1360,15 +982,19 @@
             document.getElementById('displayPromotedFeeNet').textContent = formatCurrency(promotedFeeNet);
             document.getElementById('displayShippingCostNet').textContent = formatCurrency(outboundShippingCostNet);
 
+            // Other Fixed Costs Combined
             document.getElementById('displayOtherFixedCostsCombinedNet').textContent = formatCurrency(totalOtherFixedCostsNet);
 
+            // Total Net Selling Fees & Costs
             document.getElementById('displayTotalSellingFeesNet').textContent = formatCurrency(totalNetSellingFees);
 
+            // COGS Line (uses the final net expense)
             document.getElementById('displayCOGS').textContent = formatCurrency(cogsFinalNetExpense);
 
+            // Total Investment (Net Fees + COGS)
             document.getElementById('displayTotalInvestment').textContent = formatCurrency(totalInvestmentPerUnit);
 
-            // --- 8. Update Labels with Inverse Metrics and VAT Hint (Unchanged) ---
+            // --- 8. Update Labels with Inverse Metrics and VAT Hint ---
 
             const minPriceValueContainer = document.getElementById('minPriceValue');
             const maxCogsValueContainer = document.getElementById('maxCogsValueContainer');
@@ -1377,6 +1003,7 @@
             const cogsVATAmountElement = document.getElementById('cogsVATAmount');
 
             const targetProfitText = formatCurrency(targetProfit);
+            const langData = translations[currentLang];
 
             // Update COGS Tax Hint based on scheme
             let hintKey = '';
@@ -1430,6 +1057,7 @@
             loadSettings();
 
             // 2. Set language (which triggers the first updateProfit)
+            // We use the language value determined by loadSettings()
             setLanguage(currentLang);
         };
     </script>
