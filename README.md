@@ -10,6 +10,15 @@ https://fleischkuechle.github.io/amazon-fba-profit-analyzer/FBA%20Profit%20Calcu
 ![alt text](img/overview_02.png)
 
 
-Kind of the same calculator but for ebay 
+# Kind of the same calculator but for ebay:
+
 https://fleischkuechle.github.io/amazon-fba-profit-analyzer/Ebay_profit_calculator_web_app.html
 
+
+
+
+![alt text](img/overview_03.png)
+
+
+
+![alt text](img/overview_04.png)
